@@ -3,6 +3,8 @@ import copy
 import os
 import os.path as osp
 import time
+import warnings
+
 import mmcv
 import torch
 from mmcv.runner import init_dist
@@ -14,7 +16,12 @@ from mmseg.models import build_segmentor
 from mmseg.utils import collect_env, get_root_logger
 import denseclip
 
-
+warnings.filterwarnings(
+    'ignore',
+    message='On January 1, 2023, MMCV will release v2.0.0, in which it will remove components related to the training process',
+    category=UserWarning,
+    module='mmcv'
+)
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a segmentor')
     parser.add_argument('config', help='train config file path')

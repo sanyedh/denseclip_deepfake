@@ -1,6 +1,6 @@
 # 1. 引用基础配置
 _base_ = [
-    '_base_/models/denseclip_r50.py',
+    # '_base_/models/denseclip_r50.py',
     '_base_/default_runtime.py',
     '_base_/schedules/schedule_80k.py'
 ]
@@ -128,30 +128,35 @@ model = dict(
         num_classes=2,
         norm_cfg=dict(type='BN', requires_grad=True),
         align_corners=False,
-
-        # --- 修正点 1: ignore_index 应该放在这里 (默认即为255，显式写出更清晰) ---
         ignore_index=255,
 
+        # --- 新增: OHEM 难例挖掘采样器 ---
+        # 仅对预测概率低于 0.7 的困难像素计算 Loss，每次至少保留 100000 个像素点
+        sampler=dict(type='OHEMPixelSampler', thresh=0.7, min_kept=100000),
+
         loss_decode=[
-            dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0, class_weight=[0.4, 1.0]),
-            dict(type='DiceLoss', loss_weight=1.5) # Dice Loss 专注于重叠度
+            # 配合 OHEM，将 real(0) 类的权重进一步压低至 0.1，让网络更关注 fake(1)
+            dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0, class_weight=[0.1, 1.0]),
+            # 提升 Dice Loss 权重至 3.0，强制网络关注整体区域的重叠度
+            dict(type='DiceLoss', loss_weight=3.0)
         ]
     ),
     identity_head=dict(
         type='IdentityHead',
-        in_channels=2,   # 👈 增加这行 (匹配 score_map 的 2 个类)
-        channels=2,      # 👈 增加这行
+        in_channels=2,
+        channels=2,
         num_classes=2,
         norm_cfg=dict(type='BN', requires_grad=True),
-
-        # --- 修正点 3: 同上 ---
         ignore_index=255,
+
+        # --- 新增: 辅助头同样引入 OHEM ---
+        sampler=dict(type='OHEMPixelSampler', thresh=0.7, min_kept=100000),
 
         loss_decode=dict(
             type='CrossEntropyLoss',
             use_sigmoid=False,
             loss_weight=0.2,
-            class_weight=[0.4, 1.0] # 这里也需要加权
+            class_weight=[0.1, 1.0] # 辅助头权重同步调整
         )
     ),
     test_cfg=dict(mode='whole')

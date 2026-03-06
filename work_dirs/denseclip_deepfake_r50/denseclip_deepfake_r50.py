@@ -216,13 +216,14 @@ model = dict(
         norm_cfg=dict(type='BN', requires_grad=True),
         align_corners=False,
         ignore_index=255,
+        sampler=dict(type='OHEMPixelSampler', thresh=0.7, min_kept=100000),
         loss_decode=[
             dict(
                 type='CrossEntropyLoss',
                 use_sigmoid=False,
                 loss_weight=1.0,
-                class_weight=[0.4, 1.0]),
-            dict(type='DiceLoss', loss_weight=1.5)
+                class_weight=[0.1, 1.0]),
+            dict(type='DiceLoss', loss_weight=3.0)
         ]),
     identity_head=dict(
         type='IdentityHead',
@@ -231,11 +232,12 @@ model = dict(
         num_classes=2,
         norm_cfg=dict(type='BN', requires_grad=True),
         ignore_index=255,
+        sampler=dict(type='OHEMPixelSampler', thresh=0.7, min_kept=100000),
         loss_decode=dict(
             type='CrossEntropyLoss',
             use_sigmoid=False,
             loss_weight=0.2,
-            class_weight=[0.4, 1.0])),
+            class_weight=[0.1, 1.0])),
     test_cfg=dict(mode='whole'))
 work_dir = './work_dirs\denseclip_deepfake_r50'
 gpu_ids = range(0, 1)
