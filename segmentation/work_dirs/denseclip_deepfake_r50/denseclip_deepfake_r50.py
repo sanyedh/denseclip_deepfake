@@ -30,8 +30,10 @@ train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', reduce_zero_label=False),
     dict(type='ForceBinaryLabels', threshold=127),
-    dict(type='Resize', img_scale=(299, 299), keep_ratio=True),
+    dict(type='Resize', img_scale=(299, 299), ratio_range=(0.75, 1.25)),
+    dict(type='RandomCrop', crop_size=(299, 299), cat_max_ratio=0.75),
     dict(type='RandomFlip', prob=0.5),
+    dict(type='PhotoMetricDistortion'),
     dict(
         type='Normalize',
         mean=[123.675, 116.28, 103.53],
@@ -86,8 +88,11 @@ data = dict(
             dict(type='LoadImageFromFile'),
             dict(type='LoadAnnotations', reduce_zero_label=False),
             dict(type='ForceBinaryLabels', threshold=127),
-            dict(type='Resize', img_scale=(299, 299), keep_ratio=True),
+            dict(
+                type='Resize', img_scale=(299, 299), ratio_range=(0.75, 1.25)),
+            dict(type='RandomCrop', crop_size=(299, 299), cat_max_ratio=0.75),
             dict(type='RandomFlip', prob=0.5),
+            dict(type='PhotoMetricDistortion'),
             dict(
                 type='Normalize',
                 mean=[123.675, 116.28, 103.53],
@@ -181,7 +186,7 @@ model = dict(
     type='DenseCLIP',
     pretrained='F:\python_program\deepfake\DenseCLIP-master\pretrained\RN50.pt',
     class_names=['real', 'fake'],
-    text_head=False,
+    text_head=True,
     context_length=5,
     backbone=dict(
         type='CLIPResNetWithAttention',
@@ -206,7 +211,7 @@ model = dict(
         out_channels=256,
         num_outs=4),
     decode_head=dict(
-        type='FPNHead',
+        type='TextGuidedFPNHead',
         in_channels=[256, 256, 256, 256],
         in_index=[0, 1, 2, 3],
         feature_strides=[4, 8, 16, 32],
@@ -216,13 +221,14 @@ model = dict(
         norm_cfg=dict(type='BN', requires_grad=True),
         align_corners=False,
         ignore_index=255,
+        sampler=dict(type='OHEMPixelSampler', thresh=0.7, min_kept=100000),
         loss_decode=[
             dict(
                 type='CrossEntropyLoss',
                 use_sigmoid=False,
                 loss_weight=1.0,
-                class_weight=[0.4, 1.0]),
-            dict(type='DiceLoss', loss_weight=1.5)
+                class_weight=[0.1, 1.0]),
+            dict(type='DiceLoss', loss_weight=3.0)
         ]),
     identity_head=dict(
         type='IdentityHead',
@@ -231,11 +237,12 @@ model = dict(
         num_classes=2,
         norm_cfg=dict(type='BN', requires_grad=True),
         ignore_index=255,
+        sampler=dict(type='OHEMPixelSampler', thresh=0.7, min_kept=100000),
         loss_decode=dict(
             type='CrossEntropyLoss',
             use_sigmoid=False,
-            loss_weight=0.2,
-            class_weight=[0.4, 1.0])),
+            loss_weight=1.0,
+            class_weight=[0.1, 1.0])),
     test_cfg=dict(mode='whole'))
 work_dir = './work_dirs\denseclip_deepfake_r50'
 gpu_ids = range(0, 1)

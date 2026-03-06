@@ -84,3 +84,17 @@ class DeepfakeDataset(CustomDataset):
 
         self.pre_pipeline(results)
         return self.pipeline(results)
+
+    def get_gt_seg_map_by_idx(self, index):
+        """重写此方法以在验证/测试评估时二值化标签"""
+        ann_info = self.get_ann_info(index)
+        results = dict(ann_info=ann_info)
+        self.pre_pipeline(results)
+        self.gt_seg_map_loader(results)
+        gt_seg = results['gt_semantic_seg']
+
+        # 强制将验证集的 255 (Fake) 转为类别 1
+        new_seg = np.zeros_like(gt_seg, dtype=np.uint8)
+        new_seg[gt_seg > 127] = 1
+
+        return new_seg

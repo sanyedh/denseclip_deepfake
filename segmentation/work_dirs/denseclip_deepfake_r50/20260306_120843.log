@@ -1,0 +1,1279 @@
+2026-03-06 12:08:47,066 - mmseg - INFO - Environment info:
+------------------------------------------------------------
+sys.platform: win32
+Python: 3.8.20 (default, Oct  3 2024, 15:19:54) [MSC v.1929 64 bit (AMD64)]
+CUDA available: True
+GPU 0: NVIDIA GeForce RTX 3060 Laptop GPU
+CUDA_HOME: C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.3
+NVCC: Cuda compilation tools, release 11.3, V11.3.58
+MSVC: 用于 x64 的 Microsoft (R) C/C++ 优化编译器 19.43.34809 版
+GCC: n/a
+PyTorch: 2.0.0+cu118
+PyTorch compiling details: PyTorch built with:
+  - C++ Version: 199711
+  - MSVC 193431937
+  - Intel(R) Math Kernel Library Version 2020.0.2 Product Build 20200624 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v2.7.3 (Git Hash 6dbeffbae1f23cbbeae17adb7b5b13f1f37c080e)
+  - OpenMP 2019
+  - LAPACK is enabled (usually provided by MKL)
+  - CPU capability usage: AVX2
+  - CUDA Runtime 11.8
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_61,code=sm_61;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86;-gencode;arch=compute_90,code=sm_90;-gencode;arch=compute_37,code=compute_37
+  - CuDNN 8.7
+  - Magma 2.5.4
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=11.8, CUDNN_VERSION=8.7.0, CXX_COMPILER=C:/actions-runner/_work/pytorch/pytorch/builder/windows/tmp_bin/sccache-cl.exe, CXX_FLAGS=/DWIN32 /D_WINDOWS /GR /EHsc /w /bigobj /FS -DUSE_PTHREADPOOL -DNDEBUG -DUSE_KINETO -DLIBKINETO_NOCUPTI -DLIBKINETO_NOROCTRACER -DUSE_FBGEMM -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_DISABLE_GPU_ASSERTS=OFF, TORCH_VERSION=2.0.0, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=OFF, USE_NNPACK=OFF, USE_OPENMP=ON, USE_ROCM=OFF, 
+
+TorchVision: 0.15.1+cu118
+OpenCV: 4.12.0
+MMCV: 1.7.2
+MMCV Compiler: MSVC 192930148
+MMCV CUDA Compiler: 11.8
+MMSegmentation: 0.19.0+d4a3935
+------------------------------------------------------------
+
+2026-03-06 12:08:47,066 - mmseg - INFO - Distributed training: False
+2026-03-06 12:08:47,819 - mmseg - INFO - Config:
+log_config = dict(
+    interval=50, hooks=[dict(type='TextLoggerHook', by_epoch=False)])
+dist_params = dict(backend='nccl')
+log_level = 'INFO'
+load_from = None
+resume_from = None
+workflow = [('train', 1)]
+cudnn_benchmark = True
+find_unused_parameters = True
+optimizer = dict(type='AdamW', lr=0.0001, weight_decay=0.0001)
+optimizer_config = dict()
+lr_config = dict(
+    policy='poly',
+    power=0.9,
+    min_lr=1e-06,
+    by_epoch=False,
+    warmup='linear',
+    warmup_iters=1500,
+    warmup_ratio=1e-06)
+runner = dict(type='IterBasedRunner', max_iters=80000)
+checkpoint_config = dict(by_epoch=False, interval=4000)
+evaluation = dict(interval=4000, metric='mIoU', save_best='mIoU')
+custom_imports = dict(
+    imports=['mmseg_custom.datasets.deepfake'], allow_failed_imports=False)
+data_root = 'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset'
+dataset_type = 'DeepfakeDataset'
+img_norm_cfg = dict(
+    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+train_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='LoadAnnotations', reduce_zero_label=False),
+    dict(type='ForceBinaryLabels', threshold=127),
+    dict(type='Resize', img_scale=(299, 299), ratio_range=(0.75, 1.25)),
+    dict(type='RandomCrop', crop_size=(299, 299), cat_max_ratio=0.75),
+    dict(type='RandomFlip', prob=0.5),
+    dict(type='PhotoMetricDistortion'),
+    dict(
+        type='Normalize',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        to_rgb=True),
+    dict(type='Pad', size=(320, 320), pad_val=0, seg_pad_val=255),
+    dict(type='DefaultFormatBundle'),
+    dict(
+        type='Collect',
+        keys=['img', 'gt_semantic_seg'],
+        meta_keys=[
+            'filename', 'ori_shape', 'img_shape', 'pad_shape', 'scale_factor',
+            'flip', 'flip_direction', 'text_prompts'
+        ])
+]
+test_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(
+        type='MultiScaleFlipAug',
+        img_scale=(299, 299),
+        flip=False,
+        transforms=[
+            dict(type='Resize', keep_ratio=True),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='Pad', size=(320, 320), pad_val=0, seg_pad_val=255),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(
+                type='Collect',
+                keys=['img'],
+                meta_keys=[
+                    'filename', 'ori_shape', 'img_shape', 'pad_shape',
+                    'scale_factor', 'flip', 'flip_direction', 'text_prompts'
+                ])
+        ])
+]
+data = dict(
+    samples_per_gpu=8,
+    workers_per_gpu=8,
+    train=dict(
+        type='DeepfakeDataset',
+        data_root=
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset',
+        img_dir='images/training',
+        ann_dir='annotations/training',
+        text_json_path=
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset/text_infos/train_text.json',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='LoadAnnotations', reduce_zero_label=False),
+            dict(type='ForceBinaryLabels', threshold=127),
+            dict(
+                type='Resize', img_scale=(299, 299), ratio_range=(0.75, 1.25)),
+            dict(type='RandomCrop', crop_size=(299, 299), cat_max_ratio=0.75),
+            dict(type='RandomFlip', prob=0.5),
+            dict(type='PhotoMetricDistortion'),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='Pad', size=(320, 320), pad_val=0, seg_pad_val=255),
+            dict(type='DefaultFormatBundle'),
+            dict(
+                type='Collect',
+                keys=['img', 'gt_semantic_seg'],
+                meta_keys=[
+                    'filename', 'ori_shape', 'img_shape', 'pad_shape',
+                    'scale_factor', 'flip', 'flip_direction', 'text_prompts'
+                ])
+        ]),
+    val=dict(
+        type='DeepfakeDataset',
+        data_root=
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset',
+        img_dir='images/validation',
+        ann_dir='annotations/validation',
+        text_json_path=
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset/text_infos/val_text.json',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(
+                type='MultiScaleFlipAug',
+                img_scale=(299, 299),
+                flip=False,
+                transforms=[
+                    dict(type='Resize', keep_ratio=True),
+                    dict(
+                        type='Normalize',
+                        mean=[123.675, 116.28, 103.53],
+                        std=[58.395, 57.12, 57.375],
+                        to_rgb=True),
+                    dict(
+                        type='Pad',
+                        size=(320, 320),
+                        pad_val=0,
+                        seg_pad_val=255),
+                    dict(type='ImageToTensor', keys=['img']),
+                    dict(
+                        type='Collect',
+                        keys=['img'],
+                        meta_keys=[
+                            'filename', 'ori_shape', 'img_shape', 'pad_shape',
+                            'scale_factor', 'flip', 'flip_direction',
+                            'text_prompts'
+                        ])
+                ])
+        ]),
+    test=dict(
+        type='DeepfakeDataset',
+        data_root=
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset',
+        img_dir='images/validation',
+        ann_dir='annotations/validation',
+        text_json_path=
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset/text_infos/val_text.json',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(
+                type='MultiScaleFlipAug',
+                img_scale=(299, 299),
+                flip=False,
+                transforms=[
+                    dict(type='Resize', keep_ratio=True),
+                    dict(
+                        type='Normalize',
+                        mean=[123.675, 116.28, 103.53],
+                        std=[58.395, 57.12, 57.375],
+                        to_rgb=True),
+                    dict(
+                        type='Pad',
+                        size=(320, 320),
+                        pad_val=0,
+                        seg_pad_val=255),
+                    dict(type='ImageToTensor', keys=['img']),
+                    dict(
+                        type='Collect',
+                        keys=['img'],
+                        meta_keys=[
+                            'filename', 'ori_shape', 'img_shape', 'pad_shape',
+                            'scale_factor', 'flip', 'flip_direction',
+                            'text_prompts'
+                        ])
+                ])
+        ]))
+model = dict(
+    type='DenseCLIP',
+    pretrained='F:\python_program\deepfake\DenseCLIP-master\pretrained\RN50.pt',
+    class_names=['real', 'fake'],
+    text_head=True,
+    context_length=5,
+    backbone=dict(
+        type='CLIPResNetWithAttention',
+        layers=[3, 4, 6, 3],
+        style='pytorch',
+        input_resolution=320),
+    text_encoder=dict(
+        type='CLIPTextContextEncoder', context_length=77, style='pytorch'),
+    context_decoder=dict(
+        type='ContextDecoder',
+        context_length=16,
+        transformer_width=256,
+        transformer_heads=4,
+        transformer_layers=6,
+        visual_dim=1024,
+        dropout=0.1,
+        outdim=512,
+        style='pytorch'),
+    neck=dict(
+        type='FPN',
+        in_channels=[256, 512, 1024, 2050],
+        out_channels=256,
+        num_outs=4),
+    decode_head=dict(
+        type='TextGuidedFPNHead',
+        in_channels=[256, 256, 256, 256],
+        in_index=[0, 1, 2, 3],
+        feature_strides=[4, 8, 16, 32],
+        channels=256,
+        dropout_ratio=0.1,
+        num_classes=2,
+        norm_cfg=dict(type='BN', requires_grad=True),
+        align_corners=False,
+        ignore_index=255,
+        sampler=dict(type='OHEMPixelSampler', thresh=0.7, min_kept=100000),
+        loss_decode=[
+            dict(
+                type='CrossEntropyLoss',
+                use_sigmoid=False,
+                loss_weight=1.0,
+                class_weight=[0.1, 1.0]),
+            dict(type='DiceLoss', loss_weight=3.0)
+        ]),
+    identity_head=dict(
+        type='IdentityHead',
+        in_channels=2,
+        channels=2,
+        num_classes=2,
+        norm_cfg=dict(type='BN', requires_grad=True),
+        ignore_index=255,
+        sampler=dict(type='OHEMPixelSampler', thresh=0.7, min_kept=100000),
+        loss_decode=dict(
+            type='CrossEntropyLoss',
+            use_sigmoid=False,
+            loss_weight=1.0,
+            class_weight=[0.1, 1.0])),
+    test_cfg=dict(mode='whole'))
+work_dir = './work_dirs\denseclip_deepfake_r50'
+gpu_ids = range(0, 1)
+
+2026-03-06 12:08:47,922 - mmseg - INFO - Loaded 2681 images
+2026-03-06 12:08:48,612 - mmseg - INFO - #Params: 116960096
+2026-03-06 12:08:49,683 - mmseg - INFO - DenseCLIP(
+  (backbone): CLIPResNetWithAttention(
+    (conv1): Conv2d(3, 32, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+    (bn1): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (conv2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+    (bn2): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (conv3): Conv2d(32, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+    (bn3): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (avgpool): AvgPool2d(kernel_size=2, stride=2, padding=0)
+    (relu): ReLU(inplace=True)
+    (layer1): Sequential(
+      (0): Bottleneck(
+        (conv1): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): Identity()
+        (conv3): Conv2d(64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+        (downsample): Sequential(
+          (-1): AvgPool2d(kernel_size=1, stride=1, padding=0)
+          (0): Conv2d(64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (1): Bottleneck(
+        (conv1): Conv2d(256, 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): Identity()
+        (conv3): Conv2d(64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (2): Bottleneck(
+        (conv1): Conv2d(256, 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): Identity()
+        (conv3): Conv2d(64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+    )
+    (layer2): Sequential(
+      (0): Bottleneck(
+        (conv1): Conv2d(256, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): AvgPool2d(kernel_size=2, stride=2, padding=0)
+        (conv3): Conv2d(128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+        (downsample): Sequential(
+          (-1): AvgPool2d(kernel_size=2, stride=2, padding=0)
+          (0): Conv2d(256, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (1): Bottleneck(
+        (conv1): Conv2d(512, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): Identity()
+        (conv3): Conv2d(128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (2): Bottleneck(
+        (conv1): Conv2d(512, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): Identity()
+        (conv3): Conv2d(128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (3): Bottleneck(
+        (conv1): Conv2d(512, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): Identity()
+        (conv3): Conv2d(128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+    )
+    (layer3): Sequential(
+      (0): Bottleneck(
+        (conv1): Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): AvgPool2d(kernel_size=2, stride=2, padding=0)
+        (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+        (downsample): Sequential(
+          (-1): AvgPool2d(kernel_size=2, stride=2, padding=0)
+          (0): Conv2d(512, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (1): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (1): Bottleneck(
+        (conv1): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): Identity()
+        (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (2): Bottleneck(
+        (conv1): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): Identity()
+        (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (3): Bottleneck(
+        (conv1): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): Identity()
+        (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (4): Bottleneck(
+        (conv1): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): Identity()
+        (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (5): Bottleneck(
+        (conv1): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): Identity()
+        (conv3): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(1024, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+    )
+    (layer4): Sequential(
+      (0): Bottleneck(
+        (conv1): Conv2d(1024, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): AvgPool2d(kernel_size=2, stride=2, padding=0)
+        (conv3): Conv2d(512, 2048, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+        (downsample): Sequential(
+          (-1): AvgPool2d(kernel_size=2, stride=2, padding=0)
+          (0): Conv2d(1024, 2048, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (1): BatchNorm2d(2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+      (1): Bottleneck(
+        (conv1): Conv2d(2048, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): Identity()
+        (conv3): Conv2d(512, 2048, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+      (2): Bottleneck(
+        (conv1): Conv2d(2048, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (conv2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (bn2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (avgpool): Identity()
+        (conv3): Conv2d(512, 2048, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (bn3): BatchNorm2d(2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu): ReLU(inplace=True)
+      )
+    )
+    (attnpool): AttentionPool2d(
+      (k_proj): Linear(in_features=2048, out_features=2048, bias=True)
+      (q_proj): Linear(in_features=2048, out_features=2048, bias=True)
+      (v_proj): Linear(in_features=2048, out_features=2048, bias=True)
+      (c_proj): Linear(in_features=2048, out_features=1024, bias=True)
+    )
+  )
+  (text_encoder): CLIPTextContextEncoder(
+    (transformer): Transformer(
+      (resblocks): Sequential(
+        (0): ResidualAttentionBlock(
+          (attn): MultiheadAttention(
+            (out_proj): NonDynamicallyQuantizableLinear(in_features=512, out_features=512, bias=True)
+          )
+          (ln_1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (c_fc): Linear(in_features=512, out_features=2048, bias=True)
+            (gelu): QuickGELU()
+            (c_proj): Linear(in_features=2048, out_features=512, bias=True)
+          )
+          (ln_2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (drop_path): Identity()
+        )
+        (1): ResidualAttentionBlock(
+          (attn): MultiheadAttention(
+            (out_proj): NonDynamicallyQuantizableLinear(in_features=512, out_features=512, bias=True)
+          )
+          (ln_1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (c_fc): Linear(in_features=512, out_features=2048, bias=True)
+            (gelu): QuickGELU()
+            (c_proj): Linear(in_features=2048, out_features=512, bias=True)
+          )
+          (ln_2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (drop_path): Identity()
+        )
+        (2): ResidualAttentionBlock(
+          (attn): MultiheadAttention(
+            (out_proj): NonDynamicallyQuantizableLinear(in_features=512, out_features=512, bias=True)
+          )
+          (ln_1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (c_fc): Linear(in_features=512, out_features=2048, bias=True)
+            (gelu): QuickGELU()
+            (c_proj): Linear(in_features=2048, out_features=512, bias=True)
+          )
+          (ln_2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (drop_path): Identity()
+        )
+        (3): ResidualAttentionBlock(
+          (attn): MultiheadAttention(
+            (out_proj): NonDynamicallyQuantizableLinear(in_features=512, out_features=512, bias=True)
+          )
+          (ln_1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (c_fc): Linear(in_features=512, out_features=2048, bias=True)
+            (gelu): QuickGELU()
+            (c_proj): Linear(in_features=2048, out_features=512, bias=True)
+          )
+          (ln_2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (drop_path): Identity()
+        )
+        (4): ResidualAttentionBlock(
+          (attn): MultiheadAttention(
+            (out_proj): NonDynamicallyQuantizableLinear(in_features=512, out_features=512, bias=True)
+          )
+          (ln_1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (c_fc): Linear(in_features=512, out_features=2048, bias=True)
+            (gelu): QuickGELU()
+            (c_proj): Linear(in_features=2048, out_features=512, bias=True)
+          )
+          (ln_2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (drop_path): Identity()
+        )
+        (5): ResidualAttentionBlock(
+          (attn): MultiheadAttention(
+            (out_proj): NonDynamicallyQuantizableLinear(in_features=512, out_features=512, bias=True)
+          )
+          (ln_1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (c_fc): Linear(in_features=512, out_features=2048, bias=True)
+            (gelu): QuickGELU()
+            (c_proj): Linear(in_features=2048, out_features=512, bias=True)
+          )
+          (ln_2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (drop_path): Identity()
+        )
+        (6): ResidualAttentionBlock(
+          (attn): MultiheadAttention(
+            (out_proj): NonDynamicallyQuantizableLinear(in_features=512, out_features=512, bias=True)
+          )
+          (ln_1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (c_fc): Linear(in_features=512, out_features=2048, bias=True)
+            (gelu): QuickGELU()
+            (c_proj): Linear(in_features=2048, out_features=512, bias=True)
+          )
+          (ln_2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (drop_path): Identity()
+        )
+        (7): ResidualAttentionBlock(
+          (attn): MultiheadAttention(
+            (out_proj): NonDynamicallyQuantizableLinear(in_features=512, out_features=512, bias=True)
+          )
+          (ln_1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (c_fc): Linear(in_features=512, out_features=2048, bias=True)
+            (gelu): QuickGELU()
+            (c_proj): Linear(in_features=2048, out_features=512, bias=True)
+          )
+          (ln_2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (drop_path): Identity()
+        )
+        (8): ResidualAttentionBlock(
+          (attn): MultiheadAttention(
+            (out_proj): NonDynamicallyQuantizableLinear(in_features=512, out_features=512, bias=True)
+          )
+          (ln_1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (c_fc): Linear(in_features=512, out_features=2048, bias=True)
+            (gelu): QuickGELU()
+            (c_proj): Linear(in_features=2048, out_features=512, bias=True)
+          )
+          (ln_2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (drop_path): Identity()
+        )
+        (9): ResidualAttentionBlock(
+          (attn): MultiheadAttention(
+            (out_proj): NonDynamicallyQuantizableLinear(in_features=512, out_features=512, bias=True)
+          )
+          (ln_1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (c_fc): Linear(in_features=512, out_features=2048, bias=True)
+            (gelu): QuickGELU()
+            (c_proj): Linear(in_features=2048, out_features=512, bias=True)
+          )
+          (ln_2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (drop_path): Identity()
+        )
+        (10): ResidualAttentionBlock(
+          (attn): MultiheadAttention(
+            (out_proj): NonDynamicallyQuantizableLinear(in_features=512, out_features=512, bias=True)
+          )
+          (ln_1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (c_fc): Linear(in_features=512, out_features=2048, bias=True)
+            (gelu): QuickGELU()
+            (c_proj): Linear(in_features=2048, out_features=512, bias=True)
+          )
+          (ln_2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (drop_path): Identity()
+        )
+        (11): ResidualAttentionBlock(
+          (attn): MultiheadAttention(
+            (out_proj): NonDynamicallyQuantizableLinear(in_features=512, out_features=512, bias=True)
+          )
+          (ln_1): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (c_fc): Linear(in_features=512, out_features=2048, bias=True)
+            (gelu): QuickGELU()
+            (c_proj): Linear(in_features=2048, out_features=512, bias=True)
+          )
+          (ln_2): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+          (drop_path): Identity()
+        )
+      )
+    )
+    (token_embedding): Embedding(49408, 512)
+    (ln_final): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+  )
+  (context_decoder): ContextDecoder(
+    (memory_proj): Sequential(
+      (0): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+      (1): Linear(in_features=1024, out_features=256, bias=True)
+      (2): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+    )
+    (text_proj): Sequential(
+      (0): LayerNorm((1024,), eps=1e-05, elementwise_affine=True)
+      (1): Linear(in_features=1024, out_features=256, bias=True)
+    )
+    (decoder): ModuleList(
+      (0-5): 6 x TransformerDecoderLayer(
+        (self_attn): Attention(
+          (q_proj): Linear(in_features=256, out_features=256, bias=False)
+          (k_proj): Linear(in_features=256, out_features=256, bias=False)
+          (v_proj): Linear(in_features=256, out_features=256, bias=False)
+          (attn_drop): Dropout(p=0.0, inplace=False)
+          (proj): Linear(in_features=256, out_features=256, bias=True)
+          (proj_drop): Dropout(p=0.1, inplace=False)
+        )
+        (cross_attn): Attention(
+          (q_proj): Linear(in_features=256, out_features=256, bias=False)
+          (k_proj): Linear(in_features=256, out_features=256, bias=False)
+          (v_proj): Linear(in_features=256, out_features=256, bias=False)
+          (attn_drop): Dropout(p=0.0, inplace=False)
+          (proj): Linear(in_features=256, out_features=256, bias=True)
+          (proj_drop): Dropout(p=0.1, inplace=False)
+        )
+        (norm1): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (norm2): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (norm3): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.1, inplace=False)
+        (mlp): Sequential(
+          (0): Linear(in_features=256, out_features=1024, bias=True)
+          (1): GELU(approximate='none')
+          (2): Dropout(p=0.1, inplace=False)
+          (3): Linear(in_features=1024, out_features=256, bias=True)
+        )
+      )
+    )
+    (out_proj): Sequential(
+      (0): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      (1): Linear(in_features=256, out_features=1024, bias=True)
+    )
+  )
+  (neck): FPN(
+    (lateral_convs): ModuleList(
+      (0): ConvModule(
+        (conv): Conv2d(256, 256, kernel_size=(1, 1), stride=(1, 1))
+      )
+      (1): ConvModule(
+        (conv): Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1))
+      )
+      (2): ConvModule(
+        (conv): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1))
+      )
+      (3): ConvModule(
+        (conv): Conv2d(2050, 256, kernel_size=(1, 1), stride=(1, 1))
+      )
+    )
+    (fpn_convs): ModuleList(
+      (0-3): 4 x ConvModule(
+        (conv): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+    )
+  )
+  init_cfg={'type': 'Xavier', 'layer': 'Conv2d', 'distribution': 'uniform'}
+  (decode_head): TextGuidedFPNHead(
+    input_transform=multiple_select, ignore_index=255, align_corners=False
+    (loss_decode): ModuleList(
+      (0): CrossEntropyLoss()
+      (1): DiceLoss()
+    )
+    (conv_seg): Identity()
+    (dropout): Dropout2d(p=0.1, inplace=False)
+    (scale_heads): ModuleList(
+      (0): Sequential(
+        (0): ConvModule(
+          (conv): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (activate): ReLU(inplace=True)
+        )
+      )
+      (1): Sequential(
+        (0): ConvModule(
+          (conv): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (activate): ReLU(inplace=True)
+        )
+        (1): Upsample()
+      )
+      (2): Sequential(
+        (0): ConvModule(
+          (conv): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (activate): ReLU(inplace=True)
+        )
+        (1): Upsample()
+        (2): ConvModule(
+          (conv): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (activate): ReLU(inplace=True)
+        )
+        (3): Upsample()
+      )
+      (3): Sequential(
+        (0): ConvModule(
+          (conv): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (activate): ReLU(inplace=True)
+        )
+        (1): Upsample()
+        (2): ConvModule(
+          (conv): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (activate): ReLU(inplace=True)
+        )
+        (3): Upsample()
+        (4): ConvModule(
+          (conv): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (activate): ReLU(inplace=True)
+        )
+        (5): Upsample()
+      )
+    )
+    (visual_proj): Conv2d(256, 1024, kernel_size=(1, 1), stride=(1, 1))
+  )
+  init_cfg={'type': 'Normal', 'std': 0.01, 'override': {'name': 'conv_seg'}}
+  (identity_head): IdentityHead(
+    input_transform=None, ignore_index=255, align_corners=False
+    (loss_decode): CrossEntropyLoss()
+    (conv_seg): None
+    (dropout): Dropout2d(p=0.1, inplace=False)
+  )
+  init_cfg={'type': 'Normal', 'std': 0.01, 'override': {'name': 'conv_seg'}}
+)
+2026-03-06 12:08:51,310 - mmseg - INFO - Loaded 298 images
+2026-03-06 12:08:51,310 - mmseg - INFO - Start running, host: 27298@DESKTOP-FRJ5NP9, work_dir: F:\python_program\deepfake\DenseCLIP-master\segmentation\work_dirs\denseclip_deepfake_r50
+2026-03-06 12:08:51,310 - mmseg - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) PolyLrUpdaterHook                  
+(NORMAL      ) CheckpointHook                     
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) PolyLrUpdaterHook                  
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) PolyLrUpdaterHook                  
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+ -------------------- 
+after_train_iter:
+(ABOVE_NORMAL) OptimizerHook                      
+(NORMAL      ) CheckpointHook                     
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) CheckpointHook                     
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_epoch:
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_epoch:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_run:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+2026-03-06 12:08:51,312 - mmseg - INFO - workflow: [('train', 1)], max: 80000 iters
+2026-03-06 12:08:51,312 - mmseg - INFO - Checkpoints will be saved to F:\python_program\deepfake\DenseCLIP-master\segmentation\work_dirs\denseclip_deepfake_r50 by HardDiskBackend.
+2026-03-06 12:10:38,778 - mmseg - INFO - Iter [50/80000]	lr: 3.265e-06, eta: 1 day, 12:52:24, time: 1.660, data_time: 0.010, memory: 5267, decode.loss_ce: 0.1199, decode.loss_dice: 1.5128, decode.acc_seg: 65.3823, aux_identity.loss_ce: 0.1077, aux_identity.acc_seg: 28.9630, loss: 1.7405
+2026-03-06 12:11:54,689 - mmseg - INFO - Iter [100/80000]	lr: 6.593e-06, eta: 1 day, 11:16:22, time: 1.518, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0807, decode.loss_dice: 1.3088, decode.acc_seg: 63.6166, aux_identity.loss_ce: 0.0801, aux_identity.acc_seg: 53.7979, loss: 1.4696
+2026-03-06 12:13:12,350 - mmseg - INFO - Iter [150/80000]	lr: 9.917e-06, eta: 1 day, 10:59:02, time: 1.553, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0736, decode.loss_dice: 1.2561, decode.acc_seg: 64.7173, aux_identity.loss_ce: 0.0676, aux_identity.acc_seg: 59.9949, loss: 1.3973
+2026-03-06 12:14:38,775 - mmseg - INFO - Iter [200/80000]	lr: 1.324e-05, eta: 1 day, 11:48:02, time: 1.729, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0737, decode.loss_dice: 1.2156, decode.acc_seg: 65.3414, aux_identity.loss_ce: 0.0651, aux_identity.acc_seg: 60.3747, loss: 1.3544
+2026-03-06 12:16:02,465 - mmseg - INFO - Iter [250/80000]	lr: 1.655e-05, eta: 1 day, 12:02:17, time: 1.674, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0691, decode.loss_dice: 1.2196, decode.acc_seg: 64.9469, aux_identity.loss_ce: 0.0596, aux_identity.acc_seg: 59.7050, loss: 1.3482
+2026-03-06 12:17:25,845 - mmseg - INFO - Iter [300/80000]	lr: 1.987e-05, eta: 1 day, 12:09:57, time: 1.668, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0651, decode.loss_dice: 1.2176, decode.acc_seg: 64.6932, aux_identity.loss_ce: 0.0581, aux_identity.acc_seg: 59.3644, loss: 1.3408
+2026-03-06 12:19:21,796 - mmseg - INFO - Iter [350/80000]	lr: 2.318e-05, eta: 1 day, 14:18:35, time: 2.319, data_time: 0.653, memory: 5270, decode.loss_ce: 0.0622, decode.loss_dice: 1.2125, decode.acc_seg: 66.4309, aux_identity.loss_ce: 0.0550, aux_identity.acc_seg: 61.2197, loss: 1.3297
+2026-03-06 12:20:42,476 - mmseg - INFO - Iter [400/80000]	lr: 2.648e-05, eta: 1 day, 13:57:35, time: 1.614, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0624, decode.loss_dice: 1.2058, decode.acc_seg: 65.4280, aux_identity.loss_ce: 0.0544, aux_identity.acc_seg: 59.9303, loss: 1.3225
+2026-03-06 12:22:02,222 - mmseg - INFO - Iter [450/80000]	lr: 2.978e-05, eta: 1 day, 13:38:12, time: 1.595, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0625, decode.loss_dice: 1.1849, decode.acc_seg: 66.4200, aux_identity.loss_ce: 0.0544, aux_identity.acc_seg: 61.0948, loss: 1.3018
+2026-03-06 12:23:19,453 - mmseg - INFO - Iter [500/80000]	lr: 3.308e-05, eta: 1 day, 13:15:46, time: 1.545, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0594, decode.loss_dice: 1.1882, decode.acc_seg: 66.1042, aux_identity.loss_ce: 0.0522, aux_identity.acc_seg: 61.2156, loss: 1.2998
+2026-03-06 12:24:34,065 - mmseg - INFO - Iter [550/80000]	lr: 3.638e-05, eta: 1 day, 12:50:52, time: 1.492, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0563, decode.loss_dice: 1.2022, decode.acc_seg: 65.6443, aux_identity.loss_ce: 0.0494, aux_identity.acc_seg: 61.2656, loss: 1.3079
+2026-03-06 12:25:48,908 - mmseg - INFO - Iter [600/80000]	lr: 3.967e-05, eta: 1 day, 12:30:26, time: 1.497, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0611, decode.loss_dice: 1.1681, decode.acc_seg: 66.6102, aux_identity.loss_ce: 0.0527, aux_identity.acc_seg: 61.7081, loss: 1.2819
+2026-03-06 12:27:04,299 - mmseg - INFO - Iter [650/80000]	lr: 4.295e-05, eta: 1 day, 12:14:03, time: 1.508, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0604, decode.loss_dice: 1.1627, decode.acc_seg: 66.4471, aux_identity.loss_ce: 0.0525, aux_identity.acc_seg: 61.4647, loss: 1.2756
+2026-03-06 12:28:47,002 - mmseg - INFO - Iter [700/80000]	lr: 4.624e-05, eta: 1 day, 12:51:24, time: 2.054, data_time: 0.575, memory: 5270, decode.loss_ce: 0.0547, decode.loss_dice: 1.1835, decode.acc_seg: 65.6668, aux_identity.loss_ce: 0.0489, aux_identity.acc_seg: 60.9519, loss: 1.2871
+2026-03-06 12:30:03,543 - mmseg - INFO - Iter [750/80000]	lr: 4.952e-05, eta: 1 day, 12:37:28, time: 1.531, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0576, decode.loss_dice: 1.1677, decode.acc_seg: 66.5185, aux_identity.loss_ce: 0.0505, aux_identity.acc_seg: 61.5249, loss: 1.2758
+2026-03-06 12:31:19,420 - mmseg - INFO - Iter [800/80000]	lr: 5.279e-05, eta: 1 day, 12:24:01, time: 1.518, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0590, decode.loss_dice: 1.1903, decode.acc_seg: 65.9698, aux_identity.loss_ce: 0.0508, aux_identity.acc_seg: 61.1020, loss: 1.3000
+2026-03-06 12:32:33,822 - mmseg - INFO - Iter [850/80000]	lr: 5.606e-05, eta: 1 day, 12:09:43, time: 1.488, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0535, decode.loss_dice: 1.1858, decode.acc_seg: 65.7374, aux_identity.loss_ce: 0.0471, aux_identity.acc_seg: 61.3900, loss: 1.2863
+2026-03-06 12:33:48,862 - mmseg - INFO - Iter [900/80000]	lr: 5.933e-05, eta: 1 day, 11:57:48, time: 1.501, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0533, decode.loss_dice: 1.1952, decode.acc_seg: 65.8233, aux_identity.loss_ce: 0.0478, aux_identity.acc_seg: 61.0594, loss: 1.2963
+2026-03-06 12:35:03,865 - mmseg - INFO - Iter [950/80000]	lr: 6.260e-05, eta: 1 day, 11:46:57, time: 1.500, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0540, decode.loss_dice: 1.1559, decode.acc_seg: 67.5479, aux_identity.loss_ce: 0.0477, aux_identity.acc_seg: 62.7673, loss: 1.2576
+2026-03-06 12:36:18,869 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 12:36:18,869 - mmseg - INFO - Iter [1000/80000]	lr: 6.586e-05, eta: 1 day, 11:37:05, time: 1.500, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0572, decode.loss_dice: 1.1480, decode.acc_seg: 67.2885, aux_identity.loss_ce: 0.0500, aux_identity.acc_seg: 62.4389, loss: 1.2552
+2026-03-06 12:38:03,774 - mmseg - INFO - Iter [1050/80000]	lr: 6.912e-05, eta: 1 day, 12:05:29, time: 2.098, data_time: 0.562, memory: 5270, decode.loss_ce: 0.0541, decode.loss_dice: 1.1698, decode.acc_seg: 66.7809, aux_identity.loss_ce: 0.0479, aux_identity.acc_seg: 62.1236, loss: 1.2719
+2026-03-06 12:39:19,100 - mmseg - INFO - Iter [1100/80000]	lr: 7.237e-05, eta: 1 day, 11:55:48, time: 1.507, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0558, decode.loss_dice: 1.1607, decode.acc_seg: 67.1650, aux_identity.loss_ce: 0.0493, aux_identity.acc_seg: 62.4062, loss: 1.2658
+2026-03-06 12:40:41,243 - mmseg - INFO - Iter [1150/80000]	lr: 7.562e-05, eta: 1 day, 11:54:38, time: 1.643, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0557, decode.loss_dice: 1.1596, decode.acc_seg: 66.9410, aux_identity.loss_ce: 0.0489, aux_identity.acc_seg: 62.3735, loss: 1.2642
+2026-03-06 12:42:05,119 - mmseg - INFO - Iter [1200/80000]	lr: 7.887e-05, eta: 1 day, 11:55:20, time: 1.677, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0540, decode.loss_dice: 1.1711, decode.acc_seg: 66.6281, aux_identity.loss_ce: 0.0478, aux_identity.acc_seg: 61.9628, loss: 1.2729
+2026-03-06 12:43:26,872 - mmseg - INFO - Iter [1250/80000]	lr: 8.211e-05, eta: 1 day, 11:53:39, time: 1.635, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0537, decode.loss_dice: 1.1633, decode.acc_seg: 67.4195, aux_identity.loss_ce: 0.0476, aux_identity.acc_seg: 62.3561, loss: 1.2646
+2026-03-06 12:44:48,706 - mmseg - INFO - Iter [1300/80000]	lr: 8.535e-05, eta: 1 day, 11:52:04, time: 1.637, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0534, decode.loss_dice: 1.1844, decode.acc_seg: 66.0188, aux_identity.loss_ce: 0.0471, aux_identity.acc_seg: 61.5035, loss: 1.2848
+2026-03-06 12:46:45,776 - mmseg - INFO - Iter [1350/80000]	lr: 8.858e-05, eta: 1 day, 12:24:43, time: 2.341, data_time: 0.611, memory: 5270, decode.loss_ce: 0.0518, decode.loss_dice: 1.1712, decode.acc_seg: 66.2350, aux_identity.loss_ce: 0.0458, aux_identity.acc_seg: 61.8695, loss: 1.2689
+2026-03-06 12:48:12,940 - mmseg - INFO - Iter [1400/80000]	lr: 9.181e-05, eta: 1 day, 12:26:55, time: 1.743, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0536, decode.loss_dice: 1.1555, decode.acc_seg: 67.1016, aux_identity.loss_ce: 0.0472, aux_identity.acc_seg: 62.4688, loss: 1.2564
+2026-03-06 12:49:35,080 - mmseg - INFO - Iter [1450/80000]	lr: 9.504e-05, eta: 1 day, 12:24:19, time: 1.643, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0532, decode.loss_dice: 1.1567, decode.acc_seg: 67.1649, aux_identity.loss_ce: 0.0480, aux_identity.acc_seg: 62.1109, loss: 1.2579
+2026-03-06 12:50:56,086 - mmseg - INFO - Iter [1500/80000]	lr: 9.826e-05, eta: 1 day, 12:20:49, time: 1.620, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0527, decode.loss_dice: 1.1585, decode.acc_seg: 66.5774, aux_identity.loss_ce: 0.0464, aux_identity.acc_seg: 62.3909, loss: 1.2576
+2026-03-06 12:52:21,083 - mmseg - INFO - Iter [1550/80000]	lr: 9.827e-05, eta: 1 day, 12:20:49, time: 1.700, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0525, decode.loss_dice: 1.1595, decode.acc_seg: 67.0798, aux_identity.loss_ce: 0.0464, aux_identity.acc_seg: 62.4619, loss: 1.2584
+2026-03-06 12:53:39,871 - mmseg - INFO - Iter [1600/80000]	lr: 9.822e-05, eta: 1 day, 12:15:40, time: 1.576, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0515, decode.loss_dice: 1.1600, decode.acc_seg: 66.9915, aux_identity.loss_ce: 0.0456, aux_identity.acc_seg: 62.5332, loss: 1.2572
+2026-03-06 12:54:59,892 - mmseg - INFO - Iter [1650/80000]	lr: 9.816e-05, eta: 1 day, 12:11:44, time: 1.600, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0516, decode.loss_dice: 1.1549, decode.acc_seg: 67.5073, aux_identity.loss_ce: 0.0461, aux_identity.acc_seg: 62.8004, loss: 1.2526
+2026-03-06 12:56:46,591 - mmseg - INFO - Iter [1700/80000]	lr: 9.811e-05, eta: 1 day, 12:28:25, time: 2.134, data_time: 0.586, memory: 5270, decode.loss_ce: 0.0511, decode.loss_dice: 1.1567, decode.acc_seg: 67.4544, aux_identity.loss_ce: 0.0451, aux_identity.acc_seg: 62.9325, loss: 1.2529
+2026-03-06 12:58:02,223 - mmseg - INFO - Iter [1750/80000]	lr: 9.805e-05, eta: 1 day, 12:20:53, time: 1.513, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0504, decode.loss_dice: 1.1781, decode.acc_seg: 66.2527, aux_identity.loss_ce: 0.0448, aux_identity.acc_seg: 61.6440, loss: 1.2733
+2026-03-06 12:59:16,629 - mmseg - INFO - Iter [1800/80000]	lr: 9.799e-05, eta: 1 day, 12:12:50, time: 1.488, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0517, decode.loss_dice: 1.1746, decode.acc_seg: 65.8594, aux_identity.loss_ce: 0.0458, aux_identity.acc_seg: 61.5719, loss: 1.2721
+2026-03-06 13:01:05,541 - mmseg - INFO - Iter [1850/80000]	lr: 9.794e-05, eta: 1 day, 12:29:26, time: 2.178, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0494, decode.loss_dice: 1.1847, decode.acc_seg: 66.1818, aux_identity.loss_ce: 0.0439, aux_identity.acc_seg: 61.8304, loss: 1.2780
+2026-03-06 13:02:54,421 - mmseg - INFO - Iter [1900/80000]	lr: 9.788e-05, eta: 1 day, 12:45:03, time: 2.178, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0567, decode.loss_dice: 1.1543, decode.acc_seg: 67.6665, aux_identity.loss_ce: 0.0518, aux_identity.acc_seg: 61.8818, loss: 1.2628
+2026-03-06 13:04:28,195 - mmseg - INFO - Iter [1950/80000]	lr: 9.783e-05, eta: 1 day, 12:49:41, time: 1.875, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0557, decode.loss_dice: 1.1673, decode.acc_seg: 66.7996, aux_identity.loss_ce: 0.0476, aux_identity.acc_seg: 61.9514, loss: 1.2706
+2026-03-06 13:05:49,738 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 13:05:49,738 - mmseg - INFO - Iter [2000/80000]	lr: 9.777e-05, eta: 1 day, 12:46:04, time: 1.631, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0540, decode.loss_dice: 1.1363, decode.acc_seg: 67.8496, aux_identity.loss_ce: 0.0478, aux_identity.acc_seg: 63.1791, loss: 1.2382
+2026-03-06 13:07:43,818 - mmseg - INFO - Iter [2050/80000]	lr: 9.771e-05, eta: 1 day, 13:03:11, time: 2.282, data_time: 0.642, memory: 5270, decode.loss_ce: 0.0543, decode.loss_dice: 1.1432, decode.acc_seg: 67.8371, aux_identity.loss_ce: 0.0481, aux_identity.acc_seg: 62.9864, loss: 1.2456
+2026-03-06 13:09:28,178 - mmseg - INFO - Iter [2100/80000]	lr: 9.766e-05, eta: 1 day, 13:13:22, time: 2.087, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0502, decode.loss_dice: 1.1563, decode.acc_seg: 67.2775, aux_identity.loss_ce: 0.0451, aux_identity.acc_seg: 62.8218, loss: 1.2516
+2026-03-06 13:11:21,211 - mmseg - INFO - Iter [2150/80000]	lr: 9.760e-05, eta: 1 day, 13:28:15, time: 2.261, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0514, decode.loss_dice: 1.1540, decode.acc_seg: 67.2474, aux_identity.loss_ce: 0.0457, aux_identity.acc_seg: 62.4706, loss: 1.2511
+2026-03-06 13:13:08,875 - mmseg - INFO - Iter [2200/80000]	lr: 9.755e-05, eta: 1 day, 13:39:12, time: 2.153, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0497, decode.loss_dice: 1.1595, decode.acc_seg: 67.0252, aux_identity.loss_ce: 0.0445, aux_identity.acc_seg: 62.8092, loss: 1.2536
+2026-03-06 13:14:55,431 - mmseg - INFO - Iter [2250/80000]	lr: 9.749e-05, eta: 1 day, 13:48:56, time: 2.131, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0507, decode.loss_dice: 1.1563, decode.acc_seg: 67.5724, aux_identity.loss_ce: 0.0453, aux_identity.acc_seg: 62.8409, loss: 1.2523
+2026-03-06 13:16:41,221 - mmseg - INFO - Iter [2300/80000]	lr: 9.744e-05, eta: 1 day, 13:57:45, time: 2.116, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0532, decode.loss_dice: 1.1446, decode.acc_seg: 66.5737, aux_identity.loss_ce: 0.0464, aux_identity.acc_seg: 62.3159, loss: 1.2441
+2026-03-06 13:19:07,860 - mmseg - INFO - Iter [2350/80000]	lr: 9.738e-05, eta: 1 day, 14:28:37, time: 2.933, data_time: 0.788, memory: 5270, decode.loss_ce: 0.0497, decode.loss_dice: 1.1654, decode.acc_seg: 66.8115, aux_identity.loss_ce: 0.0444, aux_identity.acc_seg: 62.1113, loss: 1.2594
+2026-03-06 13:20:57,073 - mmseg - INFO - Iter [2400/80000]	lr: 9.732e-05, eta: 1 day, 14:37:55, time: 2.184, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0515, decode.loss_dice: 1.1434, decode.acc_seg: 67.9655, aux_identity.loss_ce: 0.0454, aux_identity.acc_seg: 63.2409, loss: 1.2403
+2026-03-06 13:22:47,414 - mmseg - INFO - Iter [2450/80000]	lr: 9.727e-05, eta: 1 day, 14:47:22, time: 2.207, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0501, decode.loss_dice: 1.1493, decode.acc_seg: 66.8346, aux_identity.loss_ce: 0.0451, aux_identity.acc_seg: 62.2828, loss: 1.2445
+2026-03-06 13:24:33,783 - mmseg - INFO - Iter [2500/80000]	lr: 9.721e-05, eta: 1 day, 14:54:18, time: 2.127, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0495, decode.loss_dice: 1.1587, decode.acc_seg: 67.3751, aux_identity.loss_ce: 0.0440, aux_identity.acc_seg: 62.6451, loss: 1.2522
+2026-03-06 13:26:18,539 - mmseg - INFO - Iter [2550/80000]	lr: 9.716e-05, eta: 1 day, 15:00:04, time: 2.095, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0491, decode.loss_dice: 1.1580, decode.acc_seg: 67.1082, aux_identity.loss_ce: 0.0439, aux_identity.acc_seg: 62.8805, loss: 1.2511
+2026-03-06 13:28:02,025 - mmseg - INFO - Iter [2600/80000]	lr: 9.710e-05, eta: 1 day, 15:04:56, time: 2.070, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0503, decode.loss_dice: 1.1475, decode.acc_seg: 67.4463, aux_identity.loss_ce: 0.0451, aux_identity.acc_seg: 62.9744, loss: 1.2429
+2026-03-06 13:29:47,011 - mmseg - INFO - Iter [2650/80000]	lr: 9.704e-05, eta: 1 day, 15:10:17, time: 2.100, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0544, decode.loss_dice: 1.1502, decode.acc_seg: 67.0984, aux_identity.loss_ce: 0.0485, aux_identity.acc_seg: 61.7924, loss: 1.2531
+2026-03-06 13:32:09,912 - mmseg - INFO - Iter [2700/80000]	lr: 9.699e-05, eta: 1 day, 15:33:27, time: 2.858, data_time: 0.772, memory: 5270, decode.loss_ce: 0.0501, decode.loss_dice: 1.1629, decode.acc_seg: 66.7948, aux_identity.loss_ce: 0.0446, aux_identity.acc_seg: 62.3666, loss: 1.2576
+2026-03-06 13:34:02,493 - mmseg - INFO - Iter [2750/80000]	lr: 9.693e-05, eta: 1 day, 15:41:30, time: 2.252, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0506, decode.loss_dice: 1.1390, decode.acc_seg: 68.0135, aux_identity.loss_ce: 0.0459, aux_identity.acc_seg: 63.3029, loss: 1.2355
+2026-03-06 13:35:55,631 - mmseg - INFO - Iter [2800/80000]	lr: 9.688e-05, eta: 1 day, 15:49:27, time: 2.263, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0526, decode.loss_dice: 1.1465, decode.acc_seg: 67.5127, aux_identity.loss_ce: 0.0464, aux_identity.acc_seg: 62.8678, loss: 1.2455
+2026-03-06 13:37:54,103 - mmseg - INFO - Iter [2850/80000]	lr: 9.682e-05, eta: 1 day, 15:59:27, time: 2.370, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0487, decode.loss_dice: 1.1656, decode.acc_seg: 66.9314, aux_identity.loss_ce: 0.0436, aux_identity.acc_seg: 62.3494, loss: 1.2579
+2026-03-06 13:39:47,215 - mmseg - INFO - Iter [2900/80000]	lr: 9.677e-05, eta: 1 day, 16:06:41, time: 2.262, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0515, decode.loss_dice: 1.1458, decode.acc_seg: 67.2619, aux_identity.loss_ce: 0.0458, aux_identity.acc_seg: 62.4975, loss: 1.2431
+2026-03-06 13:41:34,824 - mmseg - INFO - Iter [2950/80000]	lr: 9.671e-05, eta: 1 day, 16:11:12, time: 2.152, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0519, decode.loss_dice: 1.1335, decode.acc_seg: 67.9658, aux_identity.loss_ce: 0.0463, aux_identity.acc_seg: 63.2131, loss: 1.2318
+2026-03-06 13:43:21,129 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 13:43:21,130 - mmseg - INFO - Iter [3000/80000]	lr: 9.665e-05, eta: 1 day, 16:14:57, time: 2.126, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0523, decode.loss_dice: 1.1421, decode.acc_seg: 68.1806, aux_identity.loss_ce: 0.0462, aux_identity.acc_seg: 63.5684, loss: 1.2406
+2026-03-06 13:45:48,888 - mmseg - INFO - Iter [3050/80000]	lr: 9.660e-05, eta: 1 day, 16:35:57, time: 2.955, data_time: 0.827, memory: 5270, decode.loss_ce: 0.0476, decode.loss_dice: 1.1659, decode.acc_seg: 67.1142, aux_identity.loss_ce: 0.0429, aux_identity.acc_seg: 62.5640, loss: 1.2564
+2026-03-06 13:47:38,978 - mmseg - INFO - Iter [3100/80000]	lr: 9.654e-05, eta: 1 day, 16:40:37, time: 2.202, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0490, decode.loss_dice: 1.1485, decode.acc_seg: 67.6988, aux_identity.loss_ce: 0.0437, aux_identity.acc_seg: 62.9903, loss: 1.2412
+2026-03-06 13:49:26,594 - mmseg - INFO - Iter [3150/80000]	lr: 9.649e-05, eta: 1 day, 16:44:04, time: 2.152, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0493, decode.loss_dice: 1.1371, decode.acc_seg: 68.3730, aux_identity.loss_ce: 0.0440, aux_identity.acc_seg: 63.9909, loss: 1.2304
+2026-03-06 13:51:15,130 - mmseg - INFO - Iter [3200/80000]	lr: 9.643e-05, eta: 1 day, 16:47:44, time: 2.171, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0518, decode.loss_dice: 1.1127, decode.acc_seg: 68.2418, aux_identity.loss_ce: 0.0459, aux_identity.acc_seg: 63.5849, loss: 1.2105
+2026-03-06 13:53:03,782 - mmseg - INFO - Iter [3250/80000]	lr: 9.637e-05, eta: 1 day, 16:51:16, time: 2.173, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0503, decode.loss_dice: 1.1365, decode.acc_seg: 67.3538, aux_identity.loss_ce: 0.0448, aux_identity.acc_seg: 62.7071, loss: 1.2316
+2026-03-06 13:54:51,300 - mmseg - INFO - Iter [3300/80000]	lr: 9.632e-05, eta: 1 day, 16:54:12, time: 2.150, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0484, decode.loss_dice: 1.1654, decode.acc_seg: 67.2375, aux_identity.loss_ce: 0.0434, aux_identity.acc_seg: 62.7496, loss: 1.2573
+2026-03-06 13:56:38,272 - mmseg - INFO - Iter [3350/80000]	lr: 9.626e-05, eta: 1 day, 16:56:47, time: 2.139, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0494, decode.loss_dice: 1.1436, decode.acc_seg: 67.7925, aux_identity.loss_ce: 0.0441, aux_identity.acc_seg: 63.2765, loss: 1.2370
+2026-03-06 13:59:02,952 - mmseg - INFO - Iter [3400/80000]	lr: 9.621e-05, eta: 1 day, 17:13:24, time: 2.894, data_time: 0.782, memory: 5270, decode.loss_ce: 0.0477, decode.loss_dice: 1.1436, decode.acc_seg: 67.7018, aux_identity.loss_ce: 0.0431, aux_identity.acc_seg: 63.1474, loss: 1.2344
+2026-03-06 14:00:49,543 - mmseg - INFO - Iter [3450/80000]	lr: 9.615e-05, eta: 1 day, 17:15:23, time: 2.132, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0480, decode.loss_dice: 1.1367, decode.acc_seg: 68.1837, aux_identity.loss_ce: 0.0430, aux_identity.acc_seg: 63.5705, loss: 1.2278
+2026-03-06 14:02:24,464 - mmseg - INFO - Iter [3500/80000]	lr: 9.609e-05, eta: 1 day, 17:13:01, time: 1.898, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0482, decode.loss_dice: 1.1488, decode.acc_seg: 66.9599, aux_identity.loss_ce: 0.0430, aux_identity.acc_seg: 62.6282, loss: 1.2400
+2026-03-06 14:03:55,738 - mmseg - INFO - Iter [3550/80000]	lr: 9.604e-05, eta: 1 day, 17:09:21, time: 1.825, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0485, decode.loss_dice: 1.1434, decode.acc_seg: 68.2830, aux_identity.loss_ce: 0.0434, aux_identity.acc_seg: 63.7257, loss: 1.2353
+2026-03-06 14:05:27,209 - mmseg - INFO - Iter [3600/80000]	lr: 9.598e-05, eta: 1 day, 17:05:49, time: 1.830, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0475, decode.loss_dice: 1.1485, decode.acc_seg: 67.7724, aux_identity.loss_ce: 0.0425, aux_identity.acc_seg: 63.4077, loss: 1.2385
+2026-03-06 14:06:56,997 - mmseg - INFO - Iter [3650/80000]	lr: 9.593e-05, eta: 1 day, 17:01:44, time: 1.796, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0510, decode.loss_dice: 1.1105, decode.acc_seg: 68.8976, aux_identity.loss_ce: 0.0452, aux_identity.acc_seg: 64.1859, loss: 1.2067
+2026-03-06 14:09:01,348 - mmseg - INFO - Iter [3700/80000]	lr: 9.587e-05, eta: 1 day, 17:09:37, time: 2.487, data_time: 0.645, memory: 5270, decode.loss_ce: 0.0475, decode.loss_dice: 1.1486, decode.acc_seg: 67.2088, aux_identity.loss_ce: 0.0431, aux_identity.acc_seg: 62.2659, loss: 1.2392
+2026-03-06 14:10:33,700 - mmseg - INFO - Iter [3750/80000]	lr: 9.581e-05, eta: 1 day, 17:06:24, time: 1.847, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0477, decode.loss_dice: 1.1192, decode.acc_seg: 68.5782, aux_identity.loss_ce: 0.0437, aux_identity.acc_seg: 63.7401, loss: 1.2106
+2026-03-06 14:12:05,083 - mmseg - INFO - Iter [3800/80000]	lr: 9.576e-05, eta: 1 day, 17:02:53, time: 1.828, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0470, decode.loss_dice: 1.1508, decode.acc_seg: 67.8788, aux_identity.loss_ce: 0.0424, aux_identity.acc_seg: 63.1471, loss: 1.2402
+2026-03-06 14:13:35,840 - mmseg - INFO - Iter [3850/80000]	lr: 9.570e-05, eta: 1 day, 16:59:13, time: 1.815, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0491, decode.loss_dice: 1.1182, decode.acc_seg: 69.0966, aux_identity.loss_ce: 0.0442, aux_identity.acc_seg: 64.3799, loss: 1.2116
+2026-03-06 14:15:06,963 - mmseg - INFO - Iter [3900/80000]	lr: 9.565e-05, eta: 1 day, 16:55:44, time: 1.822, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0486, decode.loss_dice: 1.1290, decode.acc_seg: 68.2991, aux_identity.loss_ce: 0.0441, aux_identity.acc_seg: 63.4528, loss: 1.2218
+2026-03-06 14:16:39,992 - mmseg - INFO - Iter [3950/80000]	lr: 9.559e-05, eta: 1 day, 16:52:55, time: 1.861, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0490, decode.loss_dice: 1.1413, decode.acc_seg: 68.0806, aux_identity.loss_ce: 0.0438, aux_identity.acc_seg: 63.4655, loss: 1.2342
+2026-03-06 14:18:10,341 - mmseg - INFO - Saving checkpoint at 4000 iterations
+2026-03-06 14:18:19,752 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 14:18:19,756 - mmseg - INFO - Iter [4000/80000]	lr: 9.553e-05, eta: 1 day, 16:52:15, time: 1.996, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0478, decode.loss_dice: 1.1279, decode.acc_seg: 68.2440, aux_identity.loss_ce: 0.0434, aux_identity.acc_seg: 63.5224, loss: 1.2190
+2026-03-06 14:19:10,436 - mmseg - INFO - per class results:
+2026-03-06 14:19:10,438 - mmseg - INFO - 
++-------+-------+-------+
+| Class |  IoU  |  Acc  |
++-------+-------+-------+
+|  real |  87.3 | 89.82 |
+|  fake | 39.83 | 74.92 |
++-------+-------+-------+
+2026-03-06 14:19:10,439 - mmseg - INFO - Summary:
+2026-03-06 14:19:10,439 - mmseg - INFO - 
++-------+-------+-------+
+|  aAcc |  mIoU |  mAcc |
++-------+-------+-------+
+| 88.28 | 63.56 | 82.37 |
++-------+-------+-------+
+2026-03-06 14:19:17,373 - mmseg - INFO - Now best checkpoint is saved as best_mIoU_iter_4000.pth.
+2026-03-06 14:19:17,373 - mmseg - INFO - Best mIoU is 0.6356 at 4000 iter.
+2026-03-06 14:19:17,400 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 14:19:17,400 - mmseg - INFO - Iter(val) [298]	aAcc: 0.8828, mIoU: 0.6356, mAcc: 0.8237, IoU.real: 0.8730, IoU.fake: 0.3983, Acc.real: 0.8982, Acc.fake: 0.7492
+2026-03-06 14:21:18,563 - mmseg - INFO - Iter [4050/80000]	lr: 9.548e-05, eta: 1 day, 17:16:16, time: 3.576, data_time: 1.812, memory: 5270, decode.loss_ce: 0.0460, decode.loss_dice: 1.1351, decode.acc_seg: 67.7304, aux_identity.loss_ce: 0.0418, aux_identity.acc_seg: 63.3613, loss: 1.2229
+2026-03-06 14:22:45,641 - mmseg - INFO - Iter [4100/80000]	lr: 9.542e-05, eta: 1 day, 17:11:19, time: 1.742, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0500, decode.loss_dice: 1.1350, decode.acc_seg: 67.7081, aux_identity.loss_ce: 0.0448, aux_identity.acc_seg: 63.0998, loss: 1.2298
+2026-03-06 14:24:12,792 - mmseg - INFO - Iter [4150/80000]	lr: 9.537e-05, eta: 1 day, 17:06:29, time: 1.743, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0506, decode.loss_dice: 1.1321, decode.acc_seg: 67.6023, aux_identity.loss_ce: 0.0447, aux_identity.acc_seg: 62.6674, loss: 1.2274
+2026-03-06 14:25:40,250 - mmseg - INFO - Iter [4200/80000]	lr: 9.531e-05, eta: 1 day, 17:01:49, time: 1.749, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0492, decode.loss_dice: 1.1621, decode.acc_seg: 66.9003, aux_identity.loss_ce: 0.0438, aux_identity.acc_seg: 62.4350, loss: 1.2552
+2026-03-06 14:27:08,496 - mmseg - INFO - Iter [4250/80000]	lr: 9.525e-05, eta: 1 day, 16:57:28, time: 1.765, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0458, decode.loss_dice: 1.1551, decode.acc_seg: 68.3896, aux_identity.loss_ce: 0.0420, aux_identity.acc_seg: 63.6086, loss: 1.2429
+2026-03-06 14:28:36,354 - mmseg - INFO - Iter [4300/80000]	lr: 9.520e-05, eta: 1 day, 16:53:04, time: 1.757, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0485, decode.loss_dice: 1.1311, decode.acc_seg: 68.2239, aux_identity.loss_ce: 0.0440, aux_identity.acc_seg: 63.4733, loss: 1.2235
+2026-03-06 14:30:03,899 - mmseg - INFO - Iter [4350/80000]	lr: 9.514e-05, eta: 1 day, 16:48:39, time: 1.751, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0499, decode.loss_dice: 1.1380, decode.acc_seg: 67.1240, aux_identity.loss_ce: 0.0446, aux_identity.acc_seg: 62.2584, loss: 1.2325
+2026-03-06 14:32:04,390 - mmseg - INFO - Iter [4400/80000]	lr: 9.509e-05, eta: 1 day, 16:53:43, time: 2.410, data_time: 0.646, memory: 5270, decode.loss_ce: 0.0461, decode.loss_dice: 1.1347, decode.acc_seg: 68.1198, aux_identity.loss_ce: 0.0421, aux_identity.acc_seg: 63.6016, loss: 1.2230
+2026-03-06 14:33:30,404 - mmseg - INFO - Iter [4450/80000]	lr: 9.503e-05, eta: 1 day, 16:48:53, time: 1.720, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0496, decode.loss_dice: 1.1193, decode.acc_seg: 67.8463, aux_identity.loss_ce: 0.0443, aux_identity.acc_seg: 62.9527, loss: 1.2132
+2026-03-06 14:34:56,141 - mmseg - INFO - Iter [4500/80000]	lr: 9.497e-05, eta: 1 day, 16:44:03, time: 1.715, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0469, decode.loss_dice: 1.1264, decode.acc_seg: 68.5303, aux_identity.loss_ce: 0.0425, aux_identity.acc_seg: 64.0809, loss: 1.2158
+2026-03-06 14:36:21,697 - mmseg - INFO - Iter [4550/80000]	lr: 9.492e-05, eta: 1 day, 16:39:14, time: 1.711, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0471, decode.loss_dice: 1.1411, decode.acc_seg: 67.9663, aux_identity.loss_ce: 0.0427, aux_identity.acc_seg: 63.1977, loss: 1.2308
+2026-03-06 14:37:47,672 - mmseg - INFO - Iter [4600/80000]	lr: 9.486e-05, eta: 1 day, 16:34:37, time: 1.720, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0467, decode.loss_dice: 1.1350, decode.acc_seg: 68.1540, aux_identity.loss_ce: 0.0427, aux_identity.acc_seg: 63.4893, loss: 1.2243
+2026-03-06 14:39:14,043 - mmseg - INFO - Iter [4650/80000]	lr: 9.481e-05, eta: 1 day, 16:30:10, time: 1.727, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0477, decode.loss_dice: 1.1342, decode.acc_seg: 68.3185, aux_identity.loss_ce: 0.0433, aux_identity.acc_seg: 63.6159, loss: 1.2252
+2026-03-06 14:41:11,746 - mmseg - INFO - Iter [4700/80000]	lr: 9.475e-05, eta: 1 day, 16:34:09, time: 2.354, data_time: 0.645, memory: 5270, decode.loss_ce: 0.0480, decode.loss_dice: 1.1238, decode.acc_seg: 68.0718, aux_identity.loss_ce: 0.0433, aux_identity.acc_seg: 63.3686, loss: 1.2151
+2026-03-06 14:42:39,216 - mmseg - INFO - Iter [4750/80000]	lr: 9.469e-05, eta: 1 day, 16:30:01, time: 1.749, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0468, decode.loss_dice: 1.1253, decode.acc_seg: 68.6915, aux_identity.loss_ce: 0.0428, aux_identity.acc_seg: 63.8844, loss: 1.2148
+2026-03-06 14:44:07,493 - mmseg - INFO - Iter [4800/80000]	lr: 9.464e-05, eta: 1 day, 16:26:09, time: 1.766, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0487, decode.loss_dice: 1.1179, decode.acc_seg: 69.0732, aux_identity.loss_ce: 0.0441, aux_identity.acc_seg: 64.0846, loss: 1.2107
+2026-03-06 14:45:35,573 - mmseg - INFO - Iter [4850/80000]	lr: 9.458e-05, eta: 1 day, 16:22:18, time: 1.762, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0474, decode.loss_dice: 1.1222, decode.acc_seg: 69.1111, aux_identity.loss_ce: 0.0431, aux_identity.acc_seg: 64.2760, loss: 1.2128
+2026-03-06 14:47:04,302 - mmseg - INFO - Iter [4900/80000]	lr: 9.453e-05, eta: 1 day, 16:18:39, time: 1.775, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0465, decode.loss_dice: 1.1322, decode.acc_seg: 68.8072, aux_identity.loss_ce: 0.0422, aux_identity.acc_seg: 63.8690, loss: 1.2209
+2026-03-06 14:48:31,460 - mmseg - INFO - Iter [4950/80000]	lr: 9.447e-05, eta: 1 day, 16:14:39, time: 1.743, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0474, decode.loss_dice: 1.1168, decode.acc_seg: 68.9158, aux_identity.loss_ce: 0.0429, aux_identity.acc_seg: 64.1622, loss: 1.2072
+2026-03-06 14:49:58,590 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 14:49:58,591 - mmseg - INFO - Iter [5000/80000]	lr: 9.441e-05, eta: 1 day, 16:10:41, time: 1.743, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0486, decode.loss_dice: 1.1143, decode.acc_seg: 68.7929, aux_identity.loss_ce: 0.0438, aux_identity.acc_seg: 64.0423, loss: 1.2066
+2026-03-06 14:51:57,696 - mmseg - INFO - Iter [5050/80000]	lr: 9.436e-05, eta: 1 day, 16:14:41, time: 2.382, data_time: 0.650, memory: 5270, decode.loss_ce: 0.0470, decode.loss_dice: 1.1144, decode.acc_seg: 68.7209, aux_identity.loss_ce: 0.0428, aux_identity.acc_seg: 64.0991, loss: 1.2042
+2026-03-06 14:53:26,214 - mmseg - INFO - Iter [5100/80000]	lr: 9.430e-05, eta: 1 day, 16:11:05, time: 1.770, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0451, decode.loss_dice: 1.1174, decode.acc_seg: 69.1885, aux_identity.loss_ce: 0.0416, aux_identity.acc_seg: 64.2876, loss: 1.2041
+2026-03-06 14:54:53,721 - mmseg - INFO - Iter [5150/80000]	lr: 9.425e-05, eta: 1 day, 16:07:17, time: 1.750, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0466, decode.loss_dice: 1.1179, decode.acc_seg: 68.9156, aux_identity.loss_ce: 0.0425, aux_identity.acc_seg: 64.2552, loss: 1.2071
+2026-03-06 14:56:22,749 - mmseg - INFO - Iter [5200/80000]	lr: 9.419e-05, eta: 1 day, 16:03:53, time: 1.781, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0456, decode.loss_dice: 1.1401, decode.acc_seg: 67.8715, aux_identity.loss_ce: 0.0416, aux_identity.acc_seg: 63.0075, loss: 1.2274
+2026-03-06 14:57:50,496 - mmseg - INFO - Iter [5250/80000]	lr: 9.413e-05, eta: 1 day, 16:00:13, time: 1.755, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0469, decode.loss_dice: 1.1210, decode.acc_seg: 68.4417, aux_identity.loss_ce: 0.0428, aux_identity.acc_seg: 63.9060, loss: 1.2108
+2026-03-06 14:59:18,865 - mmseg - INFO - Iter [5300/80000]	lr: 9.408e-05, eta: 1 day, 15:56:45, time: 1.767, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0467, decode.loss_dice: 1.1231, decode.acc_seg: 68.1819, aux_identity.loss_ce: 0.0423, aux_identity.acc_seg: 63.5433, loss: 1.2121
+2026-03-06 15:00:46,934 - mmseg - INFO - Iter [5350/80000]	lr: 9.402e-05, eta: 1 day, 15:53:14, time: 1.761, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0468, decode.loss_dice: 1.1203, decode.acc_seg: 68.9363, aux_identity.loss_ce: 0.0425, aux_identity.acc_seg: 63.9059, loss: 1.2095
+2026-03-06 15:02:46,697 - mmseg - INFO - Iter [5400/80000]	lr: 9.397e-05, eta: 1 day, 15:57:04, time: 2.395, data_time: 0.653, memory: 5270, decode.loss_ce: 0.0448, decode.loss_dice: 1.1350, decode.acc_seg: 68.0422, aux_identity.loss_ce: 0.0411, aux_identity.acc_seg: 63.1322, loss: 1.2209
+2026-03-06 15:04:13,913 - mmseg - INFO - Iter [5450/80000]	lr: 9.391e-05, eta: 1 day, 15:53:22, time: 1.744, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0440, decode.loss_dice: 1.1488, decode.acc_seg: 67.7487, aux_identity.loss_ce: 0.0407, aux_identity.acc_seg: 63.0212, loss: 1.2335
+2026-03-06 15:05:41,139 - mmseg - INFO - Iter [5500/80000]	lr: 9.385e-05, eta: 1 day, 15:49:43, time: 1.745, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0449, decode.loss_dice: 1.1358, decode.acc_seg: 68.1164, aux_identity.loss_ce: 0.0413, aux_identity.acc_seg: 63.5252, loss: 1.2219
+2026-03-06 15:07:08,139 - mmseg - INFO - Iter [5550/80000]	lr: 9.380e-05, eta: 1 day, 15:46:03, time: 1.740, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0446, decode.loss_dice: 1.1250, decode.acc_seg: 68.5509, aux_identity.loss_ce: 0.0413, aux_identity.acc_seg: 63.8126, loss: 1.2110
+2026-03-06 15:08:38,083 - mmseg - INFO - Iter [5600/80000]	lr: 9.374e-05, eta: 1 day, 15:43:04, time: 1.799, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0447, decode.loss_dice: 1.1298, decode.acc_seg: 67.7244, aux_identity.loss_ce: 0.0407, aux_identity.acc_seg: 63.1895, loss: 1.2152
+2026-03-06 15:10:08,732 - mmseg - INFO - Iter [5650/80000]	lr: 9.369e-05, eta: 1 day, 15:40:16, time: 1.813, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0450, decode.loss_dice: 1.1418, decode.acc_seg: 67.8004, aux_identity.loss_ce: 0.0416, aux_identity.acc_seg: 62.9642, loss: 1.2284
+2026-03-06 15:12:09,849 - mmseg - INFO - Iter [5700/80000]	lr: 9.363e-05, eta: 1 day, 15:44:07, time: 2.422, data_time: 0.656, memory: 5270, decode.loss_ce: 0.0444, decode.loss_dice: 1.1313, decode.acc_seg: 68.0889, aux_identity.loss_ce: 0.0412, aux_identity.acc_seg: 63.4537, loss: 1.2170
+2026-03-06 15:13:37,500 - mmseg - INFO - Iter [5750/80000]	lr: 9.357e-05, eta: 1 day, 15:40:40, time: 1.753, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0451, decode.loss_dice: 1.1272, decode.acc_seg: 69.2303, aux_identity.loss_ce: 0.0416, aux_identity.acc_seg: 64.4742, loss: 1.2139
+2026-03-06 15:15:05,529 - mmseg - INFO - Iter [5800/80000]	lr: 9.352e-05, eta: 1 day, 15:37:19, time: 1.761, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0464, decode.loss_dice: 1.1003, decode.acc_seg: 68.9212, aux_identity.loss_ce: 0.0423, aux_identity.acc_seg: 64.2891, loss: 1.1890
+2026-03-06 15:16:33,963 - mmseg - INFO - Iter [5850/80000]	lr: 9.346e-05, eta: 1 day, 15:34:05, time: 1.769, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0453, decode.loss_dice: 1.1209, decode.acc_seg: 68.3148, aux_identity.loss_ce: 0.0418, aux_identity.acc_seg: 63.4629, loss: 1.2080
+2026-03-06 15:18:01,587 - mmseg - INFO - Iter [5900/80000]	lr: 9.341e-05, eta: 1 day, 15:30:44, time: 1.753, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0453, decode.loss_dice: 1.1216, decode.acc_seg: 69.3405, aux_identity.loss_ce: 0.0420, aux_identity.acc_seg: 64.6785, loss: 1.2089
+2026-03-06 15:19:29,371 - mmseg - INFO - Iter [5950/80000]	lr: 9.335e-05, eta: 1 day, 15:27:26, time: 1.756, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0456, decode.loss_dice: 1.1191, decode.acc_seg: 68.6829, aux_identity.loss_ce: 0.0418, aux_identity.acc_seg: 63.8610, loss: 1.2065
+2026-03-06 15:20:56,328 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 15:20:56,328 - mmseg - INFO - Iter [6000/80000]	lr: 9.329e-05, eta: 1 day, 15:23:59, time: 1.739, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0451, decode.loss_dice: 1.1101, decode.acc_seg: 69.4631, aux_identity.loss_ce: 0.0414, aux_identity.acc_seg: 64.5438, loss: 1.1966
+2026-03-06 15:22:55,397 - mmseg - INFO - Iter [6050/80000]	lr: 9.324e-05, eta: 1 day, 15:27:07, time: 2.381, data_time: 0.652, memory: 5270, decode.loss_ce: 0.0430, decode.loss_dice: 1.1316, decode.acc_seg: 68.0525, aux_identity.loss_ce: 0.0400, aux_identity.acc_seg: 63.4534, loss: 1.2146
+2026-03-06 15:24:23,063 - mmseg - INFO - Iter [6100/80000]	lr: 9.318e-05, eta: 1 day, 15:23:50, time: 1.753, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0435, decode.loss_dice: 1.1228, decode.acc_seg: 68.5569, aux_identity.loss_ce: 0.0403, aux_identity.acc_seg: 63.9710, loss: 1.2065
+2026-03-06 15:25:50,288 - mmseg - INFO - Iter [6150/80000]	lr: 9.312e-05, eta: 1 day, 15:20:29, time: 1.744, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0452, decode.loss_dice: 1.1311, decode.acc_seg: 68.6043, aux_identity.loss_ce: 0.0419, aux_identity.acc_seg: 63.5976, loss: 1.2182
+2026-03-06 15:27:18,475 - mmseg - INFO - Iter [6200/80000]	lr: 9.307e-05, eta: 1 day, 15:17:21, time: 1.764, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0449, decode.loss_dice: 1.1035, decode.acc_seg: 69.7839, aux_identity.loss_ce: 0.0415, aux_identity.acc_seg: 65.0043, loss: 1.1899
+2026-03-06 15:28:46,121 - mmseg - INFO - Iter [6250/80000]	lr: 9.301e-05, eta: 1 day, 15:14:09, time: 1.753, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0441, decode.loss_dice: 1.1196, decode.acc_seg: 68.2323, aux_identity.loss_ce: 0.0413, aux_identity.acc_seg: 63.2722, loss: 1.2050
+2026-03-06 15:30:14,671 - mmseg - INFO - Iter [6300/80000]	lr: 9.296e-05, eta: 1 day, 15:11:09, time: 1.771, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0455, decode.loss_dice: 1.1101, decode.acc_seg: 69.6893, aux_identity.loss_ce: 0.0420, aux_identity.acc_seg: 64.5318, loss: 1.1976
+2026-03-06 15:31:43,694 - mmseg - INFO - Iter [6350/80000]	lr: 9.290e-05, eta: 1 day, 15:08:16, time: 1.780, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0472, decode.loss_dice: 1.0987, decode.acc_seg: 69.2810, aux_identity.loss_ce: 0.0428, aux_identity.acc_seg: 64.5281, loss: 1.1887
+2026-03-06 15:33:43,084 - mmseg - INFO - Iter [6400/80000]	lr: 9.284e-05, eta: 1 day, 15:11:13, time: 2.388, data_time: 0.645, memory: 5270, decode.loss_ce: 0.0439, decode.loss_dice: 1.1297, decode.acc_seg: 68.6511, aux_identity.loss_ce: 0.0407, aux_identity.acc_seg: 63.8523, loss: 1.2143
+2026-03-06 15:35:10,029 - mmseg - INFO - Iter [6450/80000]	lr: 9.279e-05, eta: 1 day, 15:07:56, time: 1.739, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0438, decode.loss_dice: 1.1109, decode.acc_seg: 68.6710, aux_identity.loss_ce: 0.0411, aux_identity.acc_seg: 63.8711, loss: 1.1958
+2026-03-06 15:36:37,127 - mmseg - INFO - Iter [6500/80000]	lr: 9.273e-05, eta: 1 day, 15:04:42, time: 1.742, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0454, decode.loss_dice: 1.1131, decode.acc_seg: 69.5304, aux_identity.loss_ce: 0.0417, aux_identity.acc_seg: 64.6055, loss: 1.2002
+2026-03-06 15:38:04,307 - mmseg - INFO - Iter [6550/80000]	lr: 9.268e-05, eta: 1 day, 15:01:31, time: 1.744, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0446, decode.loss_dice: 1.1193, decode.acc_seg: 68.2172, aux_identity.loss_ce: 0.0411, aux_identity.acc_seg: 63.6858, loss: 1.2050
+2026-03-06 15:39:30,382 - mmseg - INFO - Iter [6600/80000]	lr: 9.262e-05, eta: 1 day, 14:58:09, time: 1.722, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0446, decode.loss_dice: 1.1275, decode.acc_seg: 68.6118, aux_identity.loss_ce: 0.0414, aux_identity.acc_seg: 63.6798, loss: 1.2136
+2026-03-06 15:40:57,753 - mmseg - INFO - Iter [6650/80000]	lr: 9.256e-05, eta: 1 day, 14:55:03, time: 1.747, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0443, decode.loss_dice: 1.1270, decode.acc_seg: 68.3195, aux_identity.loss_ce: 0.0411, aux_identity.acc_seg: 63.5814, loss: 1.2124
+2026-03-06 15:42:25,530 - mmseg - INFO - Iter [6700/80000]	lr: 9.251e-05, eta: 1 day, 14:52:03, time: 1.755, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0457, decode.loss_dice: 1.1034, decode.acc_seg: 69.1629, aux_identity.loss_ce: 0.0421, aux_identity.acc_seg: 64.2850, loss: 1.1912
+2026-03-06 15:44:25,320 - mmseg - INFO - Iter [6750/80000]	lr: 9.245e-05, eta: 1 day, 14:54:51, time: 2.396, data_time: 0.649, memory: 5270, decode.loss_ce: 0.0436, decode.loss_dice: 1.1172, decode.acc_seg: 68.5697, aux_identity.loss_ce: 0.0409, aux_identity.acc_seg: 63.6985, loss: 1.2016
+2026-03-06 15:45:52,982 - mmseg - INFO - Iter [6800/80000]	lr: 9.239e-05, eta: 1 day, 14:51:50, time: 1.753, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0433, decode.loss_dice: 1.1251, decode.acc_seg: 69.0993, aux_identity.loss_ce: 0.0404, aux_identity.acc_seg: 64.3699, loss: 1.2088
+2026-03-06 15:47:20,665 - mmseg - INFO - Iter [6850/80000]	lr: 9.234e-05, eta: 1 day, 14:48:50, time: 1.754, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0427, decode.loss_dice: 1.1228, decode.acc_seg: 68.4066, aux_identity.loss_ce: 0.0399, aux_identity.acc_seg: 63.8192, loss: 1.2054
+2026-03-06 15:48:47,344 - mmseg - INFO - Iter [6900/80000]	lr: 9.228e-05, eta: 1 day, 14:45:41, time: 1.734, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0465, decode.loss_dice: 1.1081, decode.acc_seg: 69.0436, aux_identity.loss_ce: 0.0424, aux_identity.acc_seg: 64.2063, loss: 1.1970
+2026-03-06 15:50:14,256 - mmseg - INFO - Iter [6950/80000]	lr: 9.223e-05, eta: 1 day, 14:42:36, time: 1.738, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0451, decode.loss_dice: 1.1129, decode.acc_seg: 69.0771, aux_identity.loss_ce: 0.0418, aux_identity.acc_seg: 64.1358, loss: 1.1998
+2026-03-06 15:51:41,122 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 15:51:41,122 - mmseg - INFO - Iter [7000/80000]	lr: 9.217e-05, eta: 1 day, 14:39:32, time: 1.737, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0427, decode.loss_dice: 1.1148, decode.acc_seg: 69.1251, aux_identity.loss_ce: 0.0397, aux_identity.acc_seg: 64.4832, loss: 1.1972
+2026-03-06 15:53:40,440 - mmseg - INFO - Iter [7050/80000]	lr: 9.211e-05, eta: 1 day, 14:42:05, time: 2.386, data_time: 0.661, memory: 5270, decode.loss_ce: 0.0447, decode.loss_dice: 1.1083, decode.acc_seg: 68.9967, aux_identity.loss_ce: 0.0416, aux_identity.acc_seg: 64.1490, loss: 1.1946
+2026-03-06 15:55:08,189 - mmseg - INFO - Iter [7100/80000]	lr: 9.206e-05, eta: 1 day, 14:39:10, time: 1.755, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0468, decode.loss_dice: 1.1153, decode.acc_seg: 69.1802, aux_identity.loss_ce: 0.0438, aux_identity.acc_seg: 63.7524, loss: 1.2059
+2026-03-06 15:56:36,810 - mmseg - INFO - Iter [7150/80000]	lr: 9.200e-05, eta: 1 day, 14:36:25, time: 1.772, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0462, decode.loss_dice: 1.1232, decode.acc_seg: 68.9276, aux_identity.loss_ce: 0.0434, aux_identity.acc_seg: 63.9754, loss: 1.2128
+2026-03-06 15:58:04,931 - mmseg - INFO - Iter [7200/80000]	lr: 9.194e-05, eta: 1 day, 14:33:36, time: 1.762, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0445, decode.loss_dice: 1.1122, decode.acc_seg: 69.0079, aux_identity.loss_ce: 0.0416, aux_identity.acc_seg: 64.2139, loss: 1.1983
+2026-03-06 15:59:33,172 - mmseg - INFO - Iter [7250/80000]	lr: 9.189e-05, eta: 1 day, 14:30:49, time: 1.765, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0460, decode.loss_dice: 1.1017, decode.acc_seg: 69.4946, aux_identity.loss_ce: 0.0421, aux_identity.acc_seg: 64.3382, loss: 1.1898
+2026-03-06 16:01:01,728 - mmseg - INFO - Iter [7300/80000]	lr: 9.183e-05, eta: 1 day, 14:28:07, time: 1.771, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0453, decode.loss_dice: 1.1033, decode.acc_seg: 69.3446, aux_identity.loss_ce: 0.0420, aux_identity.acc_seg: 64.3345, loss: 1.1907
+2026-03-06 16:02:29,249 - mmseg - INFO - Iter [7350/80000]	lr: 9.178e-05, eta: 1 day, 14:25:15, time: 1.750, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0442, decode.loss_dice: 1.1249, decode.acc_seg: 68.5002, aux_identity.loss_ce: 0.0408, aux_identity.acc_seg: 63.6219, loss: 1.2099
+2026-03-06 16:04:27,642 - mmseg - INFO - Iter [7400/80000]	lr: 9.172e-05, eta: 1 day, 14:27:28, time: 2.368, data_time: 0.647, memory: 5270, decode.loss_ce: 0.0436, decode.loss_dice: 1.1019, decode.acc_seg: 69.2911, aux_identity.loss_ce: 0.0402, aux_identity.acc_seg: 64.6897, loss: 1.1857
+2026-03-06 16:05:55,091 - mmseg - INFO - Iter [7450/80000]	lr: 9.166e-05, eta: 1 day, 14:24:35, time: 1.749, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0433, decode.loss_dice: 1.0964, decode.acc_seg: 70.0873, aux_identity.loss_ce: 0.0401, aux_identity.acc_seg: 65.2746, loss: 1.1799
+2026-03-06 16:07:23,299 - mmseg - INFO - Iter [7500/80000]	lr: 9.161e-05, eta: 1 day, 14:21:52, time: 1.764, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0435, decode.loss_dice: 1.1232, decode.acc_seg: 68.4036, aux_identity.loss_ce: 0.0411, aux_identity.acc_seg: 63.2834, loss: 1.2078
+2026-03-06 16:08:51,825 - mmseg - INFO - Iter [7550/80000]	lr: 9.155e-05, eta: 1 day, 14:19:12, time: 1.771, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0417, decode.loss_dice: 1.1223, decode.acc_seg: 69.0374, aux_identity.loss_ce: 0.0399, aux_identity.acc_seg: 64.3971, loss: 1.2039
+2026-03-06 16:10:20,098 - mmseg - INFO - Iter [7600/80000]	lr: 9.149e-05, eta: 1 day, 14:16:31, time: 1.765, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0431, decode.loss_dice: 1.0824, decode.acc_seg: 70.2044, aux_identity.loss_ce: 0.0407, aux_identity.acc_seg: 65.5219, loss: 1.1662
+2026-03-06 16:11:49,024 - mmseg - INFO - Iter [7650/80000]	lr: 9.144e-05, eta: 1 day, 14:13:56, time: 1.779, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0438, decode.loss_dice: 1.1007, decode.acc_seg: 69.6240, aux_identity.loss_ce: 0.0406, aux_identity.acc_seg: 64.8522, loss: 1.1851
+2026-03-06 16:13:16,644 - mmseg - INFO - Iter [7700/80000]	lr: 9.138e-05, eta: 1 day, 14:11:11, time: 1.752, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0436, decode.loss_dice: 1.1156, decode.acc_seg: 68.9732, aux_identity.loss_ce: 0.0406, aux_identity.acc_seg: 64.1541, loss: 1.1997
+2026-03-06 16:15:16,240 - mmseg - INFO - Iter [7750/80000]	lr: 9.133e-05, eta: 1 day, 14:13:24, time: 2.392, data_time: 0.647, memory: 5270, decode.loss_ce: 0.0450, decode.loss_dice: 1.0742, decode.acc_seg: 70.9188, aux_identity.loss_ce: 0.0416, aux_identity.acc_seg: 65.9847, loss: 1.1607
+2026-03-06 16:16:44,390 - mmseg - INFO - Iter [7800/80000]	lr: 9.127e-05, eta: 1 day, 14:10:44, time: 1.763, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0448, decode.loss_dice: 1.1058, decode.acc_seg: 69.2685, aux_identity.loss_ce: 0.0415, aux_identity.acc_seg: 64.2725, loss: 1.1921
+2026-03-06 16:18:11,961 - mmseg - INFO - Iter [7850/80000]	lr: 9.121e-05, eta: 1 day, 14:07:59, time: 1.751, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0435, decode.loss_dice: 1.1179, decode.acc_seg: 68.5682, aux_identity.loss_ce: 0.0406, aux_identity.acc_seg: 63.6036, loss: 1.2020
+2026-03-06 16:19:39,444 - mmseg - INFO - Iter [7900/80000]	lr: 9.116e-05, eta: 1 day, 14:05:14, time: 1.750, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0450, decode.loss_dice: 1.1157, decode.acc_seg: 68.6311, aux_identity.loss_ce: 0.0414, aux_identity.acc_seg: 63.6525, loss: 1.2021
+2026-03-06 16:21:08,632 - mmseg - INFO - Iter [7950/80000]	lr: 9.110e-05, eta: 1 day, 14:02:45, time: 1.784, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0422, decode.loss_dice: 1.0996, decode.acc_seg: 69.9468, aux_identity.loss_ce: 0.0399, aux_identity.acc_seg: 65.2799, loss: 1.1817
+2026-03-06 16:22:36,621 - mmseg - INFO - Saving checkpoint at 8000 iterations
+2026-03-06 16:22:49,080 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 16:22:49,094 - mmseg - INFO - Iter [8000/80000]	lr: 9.104e-05, eta: 1 day, 14:01:59, time: 2.009, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0422, decode.loss_dice: 1.1234, decode.acc_seg: 68.5755, aux_identity.loss_ce: 0.0400, aux_identity.acc_seg: 63.7244, loss: 1.2057
+2026-03-06 16:23:39,499 - mmseg - INFO - per class results:
+2026-03-06 16:23:39,505 - mmseg - INFO - 
++-------+-------+-------+
+| Class |  IoU  |  Acc  |
++-------+-------+-------+
+|  real | 87.37 | 89.91 |
+|  fake |  39.9 | 74.75 |
++-------+-------+-------+
+2026-03-06 16:23:39,507 - mmseg - INFO - Summary:
+2026-03-06 16:23:39,507 - mmseg - INFO - 
++-------+-------+-------+
+|  aAcc |  mIoU |  mAcc |
++-------+-------+-------+
+| 88.34 | 63.63 | 82.33 |
++-------+-------+-------+
+2026-03-06 16:23:39,510 - mmseg - INFO - The previous best checkpoint F:\python_program\deepfake\DenseCLIP-master\segmentation\work_dirs\denseclip_deepfake_r50\best_mIoU_iter_4000.pth was removed
+2026-03-06 16:23:46,640 - mmseg - INFO - Now best checkpoint is saved as best_mIoU_iter_8000.pth.
+2026-03-06 16:23:46,641 - mmseg - INFO - Best mIoU is 0.6363 at 8000 iter.
+2026-03-06 16:23:46,666 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 16:23:46,666 - mmseg - INFO - Iter(val) [298]	aAcc: 0.8834, mIoU: 0.6363, mAcc: 0.8233, IoU.real: 0.8737, IoU.fake: 0.3990, Acc.real: 0.8991, Acc.fake: 0.7475
+2026-03-06 16:25:47,440 - mmseg - INFO - Iter [8050/80000]	lr: 9.099e-05, eta: 1 day, 14:12:48, time: 3.567, data_time: 1.808, memory: 5270, decode.loss_ce: 0.0438, decode.loss_dice: 1.0939, decode.acc_seg: 69.8600, aux_identity.loss_ce: 0.0411, aux_identity.acc_seg: 64.7977, loss: 1.1788
+2026-03-06 16:27:15,838 - mmseg - INFO - Iter [8100/80000]	lr: 9.093e-05, eta: 1 day, 14:10:08, time: 1.768, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0434, decode.loss_dice: 1.1012, decode.acc_seg: 70.2282, aux_identity.loss_ce: 0.0412, aux_identity.acc_seg: 65.2669, loss: 1.1859
+2026-03-06 16:28:43,882 - mmseg - INFO - Iter [8150/80000]	lr: 9.088e-05, eta: 1 day, 14:07:27, time: 1.761, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0432, decode.loss_dice: 1.1005, decode.acc_seg: 69.4780, aux_identity.loss_ce: 0.0406, aux_identity.acc_seg: 64.6316, loss: 1.1843
+2026-03-06 16:30:12,668 - mmseg - INFO - Iter [8200/80000]	lr: 9.082e-05, eta: 1 day, 14:04:52, time: 1.776, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0433, decode.loss_dice: 1.1158, decode.acc_seg: 69.0305, aux_identity.loss_ce: 0.0410, aux_identity.acc_seg: 63.8632, loss: 1.2000
+2026-03-06 16:31:41,780 - mmseg - INFO - Iter [8250/80000]	lr: 9.076e-05, eta: 1 day, 14:02:21, time: 1.782, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0419, decode.loss_dice: 1.0940, decode.acc_seg: 69.5313, aux_identity.loss_ce: 0.0394, aux_identity.acc_seg: 64.8052, loss: 1.1753
+2026-03-06 16:33:10,156 - mmseg - INFO - Iter [8300/80000]	lr: 9.071e-05, eta: 1 day, 13:59:45, time: 1.768, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0426, decode.loss_dice: 1.0989, decode.acc_seg: 69.4427, aux_identity.loss_ce: 0.0402, aux_identity.acc_seg: 64.5866, loss: 1.1816
+2026-03-06 16:34:37,958 - mmseg - INFO - Iter [8350/80000]	lr: 9.065e-05, eta: 1 day, 13:57:05, time: 1.756, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0442, decode.loss_dice: 1.0927, decode.acc_seg: 70.1560, aux_identity.loss_ce: 0.0412, aux_identity.acc_seg: 65.1396, loss: 1.1781
+2026-03-06 16:36:36,814 - mmseg - INFO - Iter [8400/80000]	lr: 9.059e-05, eta: 1 day, 13:58:50, time: 2.377, data_time: 0.646, memory: 5270, decode.loss_ce: 0.0418, decode.loss_dice: 1.0844, decode.acc_seg: 70.9003, aux_identity.loss_ce: 0.0399, aux_identity.acc_seg: 65.9465, loss: 1.1660
+2026-03-06 16:38:05,098 - mmseg - INFO - Iter [8450/80000]	lr: 9.054e-05, eta: 1 day, 13:56:13, time: 1.766, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0419, decode.loss_dice: 1.0960, decode.acc_seg: 69.2991, aux_identity.loss_ce: 0.0395, aux_identity.acc_seg: 64.4319, loss: 1.1774
+2026-03-06 16:39:33,286 - mmseg - INFO - Iter [8500/80000]	lr: 9.048e-05, eta: 1 day, 13:53:37, time: 1.764, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0419, decode.loss_dice: 1.0903, decode.acc_seg: 70.0961, aux_identity.loss_ce: 0.0397, aux_identity.acc_seg: 65.1130, loss: 1.1719
+2026-03-06 16:41:01,596 - mmseg - INFO - Iter [8550/80000]	lr: 9.043e-05, eta: 1 day, 13:51:02, time: 1.766, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0420, decode.loss_dice: 1.0949, decode.acc_seg: 69.3201, aux_identity.loss_ce: 0.0403, aux_identity.acc_seg: 64.4254, loss: 1.1772
+2026-03-06 16:42:29,978 - mmseg - INFO - Iter [8600/80000]	lr: 9.037e-05, eta: 1 day, 13:48:29, time: 1.768, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0414, decode.loss_dice: 1.1160, decode.acc_seg: 68.8132, aux_identity.loss_ce: 0.0392, aux_identity.acc_seg: 64.0376, loss: 1.1966
+2026-03-06 16:43:57,777 - mmseg - INFO - Iter [8650/80000]	lr: 9.031e-05, eta: 1 day, 13:45:52, time: 1.756, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0417, decode.loss_dice: 1.1045, decode.acc_seg: 69.2251, aux_identity.loss_ce: 0.0395, aux_identity.acc_seg: 64.4314, loss: 1.1856
+2026-03-06 16:45:25,979 - mmseg - INFO - Iter [8700/80000]	lr: 9.026e-05, eta: 1 day, 13:43:18, time: 1.764, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0443, decode.loss_dice: 1.1235, decode.acc_seg: 67.9913, aux_identity.loss_ce: 0.0415, aux_identity.acc_seg: 62.7818, loss: 1.2093
+2026-03-06 16:47:26,696 - mmseg - INFO - Iter [8750/80000]	lr: 9.020e-05, eta: 1 day, 13:45:11, time: 2.414, data_time: 0.660, memory: 5270, decode.loss_ce: 0.0460, decode.loss_dice: 1.0931, decode.acc_seg: 70.1947, aux_identity.loss_ce: 0.0417, aux_identity.acc_seg: 65.2799, loss: 1.1807
+2026-03-06 16:48:52,693 - mmseg - INFO - Iter [8800/80000]	lr: 9.014e-05, eta: 1 day, 13:42:19, time: 1.720, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0434, decode.loss_dice: 1.1112, decode.acc_seg: 69.5940, aux_identity.loss_ce: 0.0409, aux_identity.acc_seg: 64.4895, loss: 1.1955
+2026-03-06 16:50:18,517 - mmseg - INFO - Iter [8850/80000]	lr: 9.009e-05, eta: 1 day, 13:39:28, time: 1.716, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0442, decode.loss_dice: 1.0843, decode.acc_seg: 70.5627, aux_identity.loss_ce: 0.0418, aux_identity.acc_seg: 65.3647, loss: 1.1702
+2026-03-06 16:51:44,559 - mmseg - INFO - Iter [8900/80000]	lr: 9.003e-05, eta: 1 day, 13:36:39, time: 1.721, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0422, decode.loss_dice: 1.0929, decode.acc_seg: 69.8982, aux_identity.loss_ce: 0.0400, aux_identity.acc_seg: 65.0366, loss: 1.1751
+2026-03-06 16:53:11,833 - mmseg - INFO - Iter [8950/80000]	lr: 8.997e-05, eta: 1 day, 13:34:00, time: 1.745, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0431, decode.loss_dice: 1.0986, decode.acc_seg: 69.5950, aux_identity.loss_ce: 0.0402, aux_identity.acc_seg: 64.6934, loss: 1.1818
+2026-03-06 16:54:37,745 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 16:54:37,746 - mmseg - INFO - Iter [9000/80000]	lr: 8.992e-05, eta: 1 day, 13:31:12, time: 1.718, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0418, decode.loss_dice: 1.0954, decode.acc_seg: 70.3053, aux_identity.loss_ce: 0.0403, aux_identity.acc_seg: 65.2186, loss: 1.1774
+2026-03-06 16:56:36,359 - mmseg - INFO - Iter [9050/80000]	lr: 8.986e-05, eta: 1 day, 13:32:41, time: 2.372, data_time: 0.659, memory: 5270, decode.loss_ce: 0.0431, decode.loss_dice: 1.0849, decode.acc_seg: 69.5851, aux_identity.loss_ce: 0.0402, aux_identity.acc_seg: 64.8980, loss: 1.1683
+2026-03-06 16:58:03,892 - mmseg - INFO - Iter [9100/80000]	lr: 8.981e-05, eta: 1 day, 13:30:06, time: 1.751, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0417, decode.loss_dice: 1.0824, decode.acc_seg: 70.0216, aux_identity.loss_ce: 0.0395, aux_identity.acc_seg: 65.1216, loss: 1.1636
+2026-03-06 16:59:30,404 - mmseg - INFO - Iter [9150/80000]	lr: 8.975e-05, eta: 1 day, 13:27:23, time: 1.730, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0415, decode.loss_dice: 1.1142, decode.acc_seg: 68.7262, aux_identity.loss_ce: 0.0395, aux_identity.acc_seg: 63.8810, loss: 1.1952
+2026-03-06 17:00:57,592 - mmseg - INFO - Iter [9200/80000]	lr: 8.969e-05, eta: 1 day, 13:24:47, time: 1.744, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0425, decode.loss_dice: 1.0836, decode.acc_seg: 69.8384, aux_identity.loss_ce: 0.0404, aux_identity.acc_seg: 64.7977, loss: 1.1665
+2026-03-06 17:02:25,965 - mmseg - INFO - Iter [9250/80000]	lr: 8.964e-05, eta: 1 day, 13:22:20, time: 1.768, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0403, decode.loss_dice: 1.1116, decode.acc_seg: 69.0771, aux_identity.loss_ce: 0.0384, aux_identity.acc_seg: 64.3223, loss: 1.1903
+2026-03-06 17:03:52,418 - mmseg - INFO - Iter [9300/80000]	lr: 8.958e-05, eta: 1 day, 13:19:39, time: 1.729, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0392, decode.loss_dice: 1.1100, decode.acc_seg: 68.5340, aux_identity.loss_ce: 0.0379, aux_identity.acc_seg: 63.7656, loss: 1.1872
+2026-03-06 17:05:19,330 - mmseg - INFO - Iter [9350/80000]	lr: 8.952e-05, eta: 1 day, 13:17:03, time: 1.738, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0429, decode.loss_dice: 1.1008, decode.acc_seg: 70.1998, aux_identity.loss_ce: 0.0406, aux_identity.acc_seg: 64.9773, loss: 1.1843
+2026-03-06 17:07:17,163 - mmseg - INFO - Iter [9400/80000]	lr: 8.947e-05, eta: 1 day, 13:18:19, time: 2.357, data_time: 0.650, memory: 5270, decode.loss_ce: 0.0400, decode.loss_dice: 1.0973, decode.acc_seg: 69.6520, aux_identity.loss_ce: 0.0385, aux_identity.acc_seg: 64.8616, loss: 1.1758
+2026-03-06 17:08:45,556 - mmseg - INFO - Iter [9450/80000]	lr: 8.941e-05, eta: 1 day, 13:15:54, time: 1.768, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0409, decode.loss_dice: 1.0941, decode.acc_seg: 69.8286, aux_identity.loss_ce: 0.0392, aux_identity.acc_seg: 64.8582, loss: 1.1742
+2026-03-06 17:10:12,062 - mmseg - INFO - Iter [9500/80000]	lr: 8.935e-05, eta: 1 day, 13:13:15, time: 1.730, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0426, decode.loss_dice: 1.0651, decode.acc_seg: 70.8855, aux_identity.loss_ce: 0.0405, aux_identity.acc_seg: 65.9253, loss: 1.1482
+2026-03-06 17:11:39,315 - mmseg - INFO - Iter [9550/80000]	lr: 8.930e-05, eta: 1 day, 13:10:43, time: 1.745, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0392, decode.loss_dice: 1.0964, decode.acc_seg: 69.1502, aux_identity.loss_ce: 0.0379, aux_identity.acc_seg: 64.5182, loss: 1.1734
+2026-03-06 17:13:07,062 - mmseg - INFO - Iter [9600/80000]	lr: 8.924e-05, eta: 1 day, 13:08:15, time: 1.755, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0409, decode.loss_dice: 1.1028, decode.acc_seg: 69.5589, aux_identity.loss_ce: 0.0392, aux_identity.acc_seg: 64.6928, loss: 1.1829
+2026-03-06 17:14:35,067 - mmseg - INFO - Iter [9650/80000]	lr: 8.919e-05, eta: 1 day, 13:05:49, time: 1.760, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0398, decode.loss_dice: 1.1194, decode.acc_seg: 68.7605, aux_identity.loss_ce: 0.0380, aux_identity.acc_seg: 63.9876, loss: 1.1972
+2026-03-06 17:16:03,084 - mmseg - INFO - Iter [9700/80000]	lr: 8.913e-05, eta: 1 day, 13:03:24, time: 1.760, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0404, decode.loss_dice: 1.1170, decode.acc_seg: 68.6139, aux_identity.loss_ce: 0.0391, aux_identity.acc_seg: 63.7214, loss: 1.1965
+2026-03-06 17:18:01,609 - mmseg - INFO - Iter [9750/80000]	lr: 8.907e-05, eta: 1 day, 13:04:40, time: 2.371, data_time: 0.658, memory: 5270, decode.loss_ce: 0.0394, decode.loss_dice: 1.1200, decode.acc_seg: 68.6226, aux_identity.loss_ce: 0.0384, aux_identity.acc_seg: 63.5195, loss: 1.1978
+2026-03-06 17:19:28,119 - mmseg - INFO - Iter [9800/80000]	lr: 8.902e-05, eta: 1 day, 13:02:04, time: 1.730, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0413, decode.loss_dice: 1.0969, decode.acc_seg: 69.7422, aux_identity.loss_ce: 0.0392, aux_identity.acc_seg: 64.7383, loss: 1.1775
+2026-03-06 17:20:53,791 - mmseg - INFO - Iter [9850/80000]	lr: 8.896e-05, eta: 1 day, 12:59:23, time: 1.713, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0410, decode.loss_dice: 1.1010, decode.acc_seg: 69.4497, aux_identity.loss_ce: 0.0392, aux_identity.acc_seg: 64.5258, loss: 1.1812
+2026-03-06 17:22:20,810 - mmseg - INFO - Iter [9900/80000]	lr: 8.890e-05, eta: 1 day, 12:56:52, time: 1.740, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0412, decode.loss_dice: 1.1083, decode.acc_seg: 69.2993, aux_identity.loss_ce: 0.0393, aux_identity.acc_seg: 64.3412, loss: 1.1889
+2026-03-06 17:23:47,836 - mmseg - INFO - Iter [9950/80000]	lr: 8.885e-05, eta: 1 day, 12:54:22, time: 1.740, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0405, decode.loss_dice: 1.0965, decode.acc_seg: 69.3685, aux_identity.loss_ce: 0.0389, aux_identity.acc_seg: 64.5643, loss: 1.1759
+2026-03-06 17:25:15,238 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 17:25:15,238 - mmseg - INFO - Iter [10000/80000]	lr: 8.879e-05, eta: 1 day, 12:51:55, time: 1.748, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0400, decode.loss_dice: 1.0709, decode.acc_seg: 71.1079, aux_identity.loss_ce: 0.0389, aux_identity.acc_seg: 66.2184, loss: 1.1497
+2026-03-06 17:26:41,722 - mmseg - INFO - Iter [10050/80000]	lr: 8.873e-05, eta: 1 day, 12:49:22, time: 1.730, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0411, decode.loss_dice: 1.1039, decode.acc_seg: 69.1967, aux_identity.loss_ce: 0.0393, aux_identity.acc_seg: 64.3151, loss: 1.1843
+2026-03-06 17:28:43,194 - mmseg - INFO - Iter [10100/80000]	lr: 8.868e-05, eta: 1 day, 12:50:53, time: 2.429, data_time: 0.651, memory: 5270, decode.loss_ce: 0.0385, decode.loss_dice: 1.0999, decode.acc_seg: 70.4789, aux_identity.loss_ce: 0.0372, aux_identity.acc_seg: 65.7298, loss: 1.1756
+2026-03-06 17:30:10,899 - mmseg - INFO - Iter [10150/80000]	lr: 8.862e-05, eta: 1 day, 12:48:28, time: 1.754, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0411, decode.loss_dice: 1.0894, decode.acc_seg: 69.1589, aux_identity.loss_ce: 0.0390, aux_identity.acc_seg: 64.2648, loss: 1.1695
+2026-03-06 17:31:38,725 - mmseg - INFO - Iter [10200/80000]	lr: 8.856e-05, eta: 1 day, 12:46:05, time: 1.756, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0394, decode.loss_dice: 1.1006, decode.acc_seg: 70.2473, aux_identity.loss_ce: 0.0384, aux_identity.acc_seg: 65.0946, loss: 1.1784
+2026-03-06 17:33:07,247 - mmseg - INFO - Iter [10250/80000]	lr: 8.851e-05, eta: 1 day, 12:43:48, time: 1.770, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0400, decode.loss_dice: 1.0880, decode.acc_seg: 69.6329, aux_identity.loss_ce: 0.0383, aux_identity.acc_seg: 64.7149, loss: 1.1662
+2026-03-06 17:34:35,221 - mmseg - INFO - Iter [10300/80000]	lr: 8.845e-05, eta: 1 day, 12:41:27, time: 1.760, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0406, decode.loss_dice: 1.0916, decode.acc_seg: 70.1400, aux_identity.loss_ce: 0.0391, aux_identity.acc_seg: 65.1491, loss: 1.1713
+2026-03-06 17:36:03,901 - mmseg - INFO - Iter [10350/80000]	lr: 8.840e-05, eta: 1 day, 12:39:11, time: 1.774, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0414, decode.loss_dice: 1.0695, decode.acc_seg: 70.9228, aux_identity.loss_ce: 0.0400, aux_identity.acc_seg: 65.7201, loss: 1.1510
+2026-03-06 17:38:05,150 - mmseg - INFO - Iter [10400/80000]	lr: 8.834e-05, eta: 1 day, 12:40:34, time: 2.425, data_time: 0.651, memory: 5270, decode.loss_ce: 0.0401, decode.loss_dice: 1.0708, decode.acc_seg: 71.0483, aux_identity.loss_ce: 0.0388, aux_identity.acc_seg: 66.0921, loss: 1.1497
+2026-03-06 17:39:31,898 - mmseg - INFO - Iter [10450/80000]	lr: 8.828e-05, eta: 1 day, 12:38:05, time: 1.735, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0403, decode.loss_dice: 1.0800, decode.acc_seg: 70.3051, aux_identity.loss_ce: 0.0388, aux_identity.acc_seg: 65.5076, loss: 1.1591
+2026-03-06 17:40:58,738 - mmseg - INFO - Iter [10500/80000]	lr: 8.823e-05, eta: 1 day, 12:35:37, time: 1.737, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0381, decode.loss_dice: 1.1065, decode.acc_seg: 69.5989, aux_identity.loss_ce: 0.0372, aux_identity.acc_seg: 64.8276, loss: 1.1818
+2026-03-06 17:42:26,395 - mmseg - INFO - Iter [10550/80000]	lr: 8.817e-05, eta: 1 day, 12:33:16, time: 1.753, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0386, decode.loss_dice: 1.1088, decode.acc_seg: 69.2667, aux_identity.loss_ce: 0.0374, aux_identity.acc_seg: 64.4644, loss: 1.1849
+2026-03-06 17:43:54,039 - mmseg - INFO - Iter [10600/80000]	lr: 8.811e-05, eta: 1 day, 12:30:55, time: 1.753, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0391, decode.loss_dice: 1.0917, decode.acc_seg: 70.1626, aux_identity.loss_ce: 0.0380, aux_identity.acc_seg: 65.2970, loss: 1.1688
+2026-03-06 17:45:23,125 - mmseg - INFO - Iter [10650/80000]	lr: 8.806e-05, eta: 1 day, 12:28:43, time: 1.782, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0401, decode.loss_dice: 1.0824, decode.acc_seg: 69.8723, aux_identity.loss_ce: 0.0386, aux_identity.acc_seg: 65.0143, loss: 1.1611
+2026-03-06 17:46:51,167 - mmseg - INFO - Iter [10700/80000]	lr: 8.800e-05, eta: 1 day, 12:26:26, time: 1.761, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0397, decode.loss_dice: 1.0844, decode.acc_seg: 69.9158, aux_identity.loss_ce: 0.0392, aux_identity.acc_seg: 64.9252, loss: 1.1633
+2026-03-06 17:48:50,810 - mmseg - INFO - Iter [10750/80000]	lr: 8.794e-05, eta: 1 day, 12:27:32, time: 2.393, data_time: 0.645, memory: 5270, decode.loss_ce: 0.0405, decode.loss_dice: 1.0720, decode.acc_seg: 70.3980, aux_identity.loss_ce: 0.0389, aux_identity.acc_seg: 65.4085, loss: 1.1514
+2026-03-06 17:50:18,580 - mmseg - INFO - Iter [10800/80000]	lr: 8.789e-05, eta: 1 day, 12:25:12, time: 1.755, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0390, decode.loss_dice: 1.1012, decode.acc_seg: 70.2940, aux_identity.loss_ce: 0.0382, aux_identity.acc_seg: 65.2121, loss: 1.1784
+2026-03-06 17:51:46,114 - mmseg - INFO - Iter [10850/80000]	lr: 8.783e-05, eta: 1 day, 12:22:52, time: 1.751, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0394, decode.loss_dice: 1.0822, decode.acc_seg: 70.3669, aux_identity.loss_ce: 0.0389, aux_identity.acc_seg: 65.1671, loss: 1.1605
+2026-03-06 17:53:14,252 - mmseg - INFO - Iter [10900/80000]	lr: 8.777e-05, eta: 1 day, 12:20:35, time: 1.763, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0393, decode.loss_dice: 1.0620, decode.acc_seg: 71.2163, aux_identity.loss_ce: 0.0378, aux_identity.acc_seg: 66.5613, loss: 1.1391
+2026-03-06 17:54:41,418 - mmseg - INFO - Iter [10950/80000]	lr: 8.772e-05, eta: 1 day, 12:18:13, time: 1.743, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0400, decode.loss_dice: 1.0858, decode.acc_seg: 70.2029, aux_identity.loss_ce: 0.0386, aux_identity.acc_seg: 65.2910, loss: 1.1645
+2026-03-06 17:56:09,609 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 17:56:09,610 - mmseg - INFO - Iter [11000/80000]	lr: 8.766e-05, eta: 1 day, 12:15:58, time: 1.764, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0406, decode.loss_dice: 1.0750, decode.acc_seg: 70.2467, aux_identity.loss_ce: 0.0394, aux_identity.acc_seg: 65.2250, loss: 1.1550
+2026-03-06 17:57:37,827 - mmseg - INFO - Iter [11050/80000]	lr: 8.760e-05, eta: 1 day, 12:13:44, time: 1.764, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0411, decode.loss_dice: 1.0815, decode.acc_seg: 70.2449, aux_identity.loss_ce: 0.0399, aux_identity.acc_seg: 65.0948, loss: 1.1625
+2026-03-06 17:59:37,382 - mmseg - INFO - Iter [11100/80000]	lr: 8.755e-05, eta: 1 day, 12:14:44, time: 2.391, data_time: 0.650, memory: 5270, decode.loss_ce: 0.0384, decode.loss_dice: 1.0950, decode.acc_seg: 70.2227, aux_identity.loss_ce: 0.0376, aux_identity.acc_seg: 65.2812, loss: 1.1709
+2026-03-06 18:01:05,251 - mmseg - INFO - Iter [11150/80000]	lr: 8.749e-05, eta: 1 day, 12:12:27, time: 1.757, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0394, decode.loss_dice: 1.0880, decode.acc_seg: 69.9866, aux_identity.loss_ce: 0.0384, aux_identity.acc_seg: 64.9824, loss: 1.1657
+2026-03-06 18:02:33,653 - mmseg - INFO - Iter [11200/80000]	lr: 8.743e-05, eta: 1 day, 12:10:14, time: 1.768, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0380, decode.loss_dice: 1.0952, decode.acc_seg: 69.5441, aux_identity.loss_ce: 0.0375, aux_identity.acc_seg: 64.7443, loss: 1.1708
+2026-03-06 18:04:00,897 - mmseg - INFO - Iter [11250/80000]	lr: 8.738e-05, eta: 1 day, 12:07:55, time: 1.745, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0390, decode.loss_dice: 1.0806, decode.acc_seg: 70.3166, aux_identity.loss_ce: 0.0383, aux_identity.acc_seg: 65.2643, loss: 1.1579
+2026-03-06 18:05:28,289 - mmseg - INFO - Iter [11300/80000]	lr: 8.732e-05, eta: 1 day, 12:05:36, time: 1.748, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0404, decode.loss_dice: 1.0829, decode.acc_seg: 70.7678, aux_identity.loss_ce: 0.0390, aux_identity.acc_seg: 65.6743, loss: 1.1622
+2026-03-06 18:06:55,356 - mmseg - INFO - Iter [11350/80000]	lr: 8.727e-05, eta: 1 day, 12:03:16, time: 1.741, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0388, decode.loss_dice: 1.0842, decode.acc_seg: 70.2335, aux_identity.loss_ce: 0.0377, aux_identity.acc_seg: 65.3930, loss: 1.1607
+2026-03-06 18:08:55,185 - mmseg - INFO - Iter [11400/80000]	lr: 8.721e-05, eta: 1 day, 12:04:14, time: 2.397, data_time: 0.643, memory: 5270, decode.loss_ce: 0.0390, decode.loss_dice: 1.0665, decode.acc_seg: 70.2091, aux_identity.loss_ce: 0.0384, aux_identity.acc_seg: 65.2255, loss: 1.1439
+2026-03-06 18:10:23,511 - mmseg - INFO - Iter [11450/80000]	lr: 8.715e-05, eta: 1 day, 12:02:01, time: 1.767, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0384, decode.loss_dice: 1.0873, decode.acc_seg: 70.1017, aux_identity.loss_ce: 0.0378, aux_identity.acc_seg: 65.1585, loss: 1.1635
+2026-03-06 18:11:52,934 - mmseg - INFO - Iter [11500/80000]	lr: 8.710e-05, eta: 1 day, 11:59:56, time: 1.788, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0383, decode.loss_dice: 1.0887, decode.acc_seg: 70.4273, aux_identity.loss_ce: 0.0375, aux_identity.acc_seg: 65.4908, loss: 1.1645
+2026-03-06 18:13:21,070 - mmseg - INFO - Iter [11550/80000]	lr: 8.704e-05, eta: 1 day, 11:57:43, time: 1.763, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0395, decode.loss_dice: 1.0744, decode.acc_seg: 70.0928, aux_identity.loss_ce: 0.0388, aux_identity.acc_seg: 65.0237, loss: 1.1526
+2026-03-06 18:14:48,829 - mmseg - INFO - Iter [11600/80000]	lr: 8.698e-05, eta: 1 day, 11:55:28, time: 1.755, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0371, decode.loss_dice: 1.1064, decode.acc_seg: 69.4184, aux_identity.loss_ce: 0.0368, aux_identity.acc_seg: 64.5666, loss: 1.1802
+2026-03-06 18:16:16,811 - mmseg - INFO - Iter [11650/80000]	lr: 8.693e-05, eta: 1 day, 11:53:15, time: 1.760, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0388, decode.loss_dice: 1.0789, decode.acc_seg: 70.4386, aux_identity.loss_ce: 0.0384, aux_identity.acc_seg: 65.3452, loss: 1.1560
+2026-03-06 18:17:44,564 - mmseg - INFO - Iter [11700/80000]	lr: 8.687e-05, eta: 1 day, 11:51:01, time: 1.755, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0374, decode.loss_dice: 1.0872, decode.acc_seg: 69.7684, aux_identity.loss_ce: 0.0368, aux_identity.acc_seg: 64.9917, loss: 1.1615
+2026-03-06 18:19:47,541 - mmseg - INFO - Iter [11750/80000]	lr: 8.681e-05, eta: 1 day, 11:52:12, time: 2.460, data_time: 0.679, memory: 5270, decode.loss_ce: 0.0388, decode.loss_dice: 1.0684, decode.acc_seg: 71.0143, aux_identity.loss_ce: 0.0382, aux_identity.acc_seg: 65.9355, loss: 1.1455
+2026-03-06 18:21:18,163 - mmseg - INFO - Iter [11800/80000]	lr: 8.676e-05, eta: 1 day, 11:50:15, time: 1.812, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0369, decode.loss_dice: 1.0811, decode.acc_seg: 70.7079, aux_identity.loss_ce: 0.0369, aux_identity.acc_seg: 65.7947, loss: 1.1549
+2026-03-06 18:22:51,173 - mmseg - INFO - Iter [11850/80000]	lr: 8.670e-05, eta: 1 day, 11:48:31, time: 1.860, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0383, decode.loss_dice: 1.0731, decode.acc_seg: 70.9391, aux_identity.loss_ce: 0.0378, aux_identity.acc_seg: 65.9782, loss: 1.1491
+2026-03-06 18:24:22,058 - mmseg - INFO - Iter [11900/80000]	lr: 8.664e-05, eta: 1 day, 11:46:35, time: 1.818, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0365, decode.loss_dice: 1.0742, decode.acc_seg: 70.4367, aux_identity.loss_ce: 0.0366, aux_identity.acc_seg: 65.5248, loss: 1.1473
+2026-03-06 18:25:52,244 - mmseg - INFO - Iter [11950/80000]	lr: 8.659e-05, eta: 1 day, 11:44:36, time: 1.804, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0386, decode.loss_dice: 1.0794, decode.acc_seg: 70.2961, aux_identity.loss_ce: 0.0384, aux_identity.acc_seg: 65.3109, loss: 1.1564
+2026-03-06 18:27:22,653 - mmseg - INFO - Saving checkpoint at 12000 iterations
+2026-03-06 18:27:34,290 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 18:27:34,291 - mmseg - INFO - Iter [12000/80000]	lr: 8.653e-05, eta: 1 day, 11:43:44, time: 2.041, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0391, decode.loss_dice: 1.0824, decode.acc_seg: 70.2826, aux_identity.loss_ce: 0.0383, aux_identity.acc_seg: 65.1879, loss: 1.1598
+2026-03-06 18:28:25,666 - mmseg - INFO - per class results:
+2026-03-06 18:28:25,670 - mmseg - INFO - 
++-------+-------+-------+
+| Class |  IoU  |  Acc  |
++-------+-------+-------+
+|  real | 88.76 | 92.27 |
+|  fake | 39.42 | 65.82 |
++-------+-------+-------+
+2026-03-06 18:28:25,671 - mmseg - INFO - Summary:
+2026-03-06 18:28:25,671 - mmseg - INFO - 
++-------+-------+-------+
+|  aAcc |  mIoU |  mAcc |
++-------+-------+-------+
+| 89.53 | 64.09 | 79.04 |
++-------+-------+-------+
+2026-03-06 18:28:25,674 - mmseg - INFO - The previous best checkpoint F:\python_program\deepfake\DenseCLIP-master\segmentation\work_dirs\denseclip_deepfake_r50\best_mIoU_iter_8000.pth was removed
+2026-03-06 18:28:33,032 - mmseg - INFO - Now best checkpoint is saved as best_mIoU_iter_12000.pth.
+2026-03-06 18:28:33,033 - mmseg - INFO - Best mIoU is 0.6409 at 12000 iter.
+2026-03-06 18:28:33,075 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 18:28:33,076 - mmseg - INFO - Iter(val) [298]	aAcc: 0.8953, mIoU: 0.6409, mAcc: 0.7904, IoU.real: 0.8876, IoU.fake: 0.3942, Acc.real: 0.9227, Acc.fake: 0.6582
+2026-03-06 18:30:01,516 - mmseg - INFO - Iter [12050/80000]	lr: 8.647e-05, eta: 1 day, 11:47:06, time: 2.944, data_time: 1.182, memory: 5270, decode.loss_ce: 0.0391, decode.loss_dice: 1.0656, decode.acc_seg: 71.4401, aux_identity.loss_ce: 0.0381, aux_identity.acc_seg: 66.4928, loss: 1.1429
+2026-03-06 18:32:01,623 - mmseg - INFO - Iter [12100/80000]	lr: 8.642e-05, eta: 1 day, 11:47:53, time: 2.402, data_time: 0.680, memory: 5270, decode.loss_ce: 0.0358, decode.loss_dice: 1.0990, decode.acc_seg: 69.4375, aux_identity.loss_ce: 0.0359, aux_identity.acc_seg: 64.6455, loss: 1.1707
+2026-03-06 18:33:29,020 - mmseg - INFO - Iter [12150/80000]	lr: 8.636e-05, eta: 1 day, 11:45:36, time: 1.748, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0372, decode.loss_dice: 1.0762, decode.acc_seg: 70.4170, aux_identity.loss_ce: 0.0370, aux_identity.acc_seg: 65.4426, loss: 1.1504
+2026-03-06 18:34:55,098 - mmseg - INFO - Iter [12200/80000]	lr: 8.630e-05, eta: 1 day, 11:43:13, time: 1.721, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0386, decode.loss_dice: 1.0793, decode.acc_seg: 70.2921, aux_identity.loss_ce: 0.0379, aux_identity.acc_seg: 65.1146, loss: 1.1558
+2026-03-06 18:36:22,652 - mmseg - INFO - Iter [12250/80000]	lr: 8.625e-05, eta: 1 day, 11:40:58, time: 1.751, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0383, decode.loss_dice: 1.0732, decode.acc_seg: 70.5045, aux_identity.loss_ce: 0.0375, aux_identity.acc_seg: 65.6091, loss: 1.1490
+2026-03-06 18:37:50,631 - mmseg - INFO - Iter [12300/80000]	lr: 8.619e-05, eta: 1 day, 11:38:45, time: 1.760, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0387, decode.loss_dice: 1.0823, decode.acc_seg: 70.5425, aux_identity.loss_ce: 0.0382, aux_identity.acc_seg: 65.4106, loss: 1.1592
+2026-03-06 18:39:18,909 - mmseg - INFO - Iter [12350/80000]	lr: 8.613e-05, eta: 1 day, 11:36:35, time: 1.766, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0376, decode.loss_dice: 1.0801, decode.acc_seg: 70.0788, aux_identity.loss_ce: 0.0368, aux_identity.acc_seg: 65.1840, loss: 1.1546
+2026-03-06 18:41:18,301 - mmseg - INFO - Iter [12400/80000]	lr: 8.608e-05, eta: 1 day, 11:37:14, time: 2.388, data_time: 0.647, memory: 5270, decode.loss_ce: 0.0387, decode.loss_dice: 1.0852, decode.acc_seg: 70.1960, aux_identity.loss_ce: 0.0386, aux_identity.acc_seg: 65.0297, loss: 1.1625
+2026-03-06 18:42:44,596 - mmseg - INFO - Iter [12450/80000]	lr: 8.602e-05, eta: 1 day, 11:34:53, time: 1.726, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0366, decode.loss_dice: 1.0646, decode.acc_seg: 70.5348, aux_identity.loss_ce: 0.0365, aux_identity.acc_seg: 65.6342, loss: 1.1377
+2026-03-06 18:44:11,074 - mmseg - INFO - Iter [12500/80000]	lr: 8.596e-05, eta: 1 day, 11:32:33, time: 1.730, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0374, decode.loss_dice: 1.0726, decode.acc_seg: 71.1776, aux_identity.loss_ce: 0.0373, aux_identity.acc_seg: 66.1209, loss: 1.1473
+2026-03-06 18:45:41,968 - mmseg - INFO - Iter [12550/80000]	lr: 8.591e-05, eta: 1 day, 11:30:38, time: 1.818, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0370, decode.loss_dice: 1.0777, decode.acc_seg: 70.4399, aux_identity.loss_ce: 0.0372, aux_identity.acc_seg: 65.4611, loss: 1.1520
+2026-03-06 18:47:25,359 - mmseg - INFO - Iter [12600/80000]	lr: 8.585e-05, eta: 1 day, 11:29:49, time: 2.068, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0381, decode.loss_dice: 1.0792, decode.acc_seg: 70.6303, aux_identity.loss_ce: 0.0378, aux_identity.acc_seg: 65.4609, loss: 1.1552
+2026-03-06 18:48:51,994 - mmseg - INFO - Iter [12650/80000]	lr: 8.579e-05, eta: 1 day, 11:27:31, time: 1.733, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0370, decode.loss_dice: 1.0758, decode.acc_seg: 70.5625, aux_identity.loss_ce: 0.0372, aux_identity.acc_seg: 65.5636, loss: 1.1500
+2026-03-06 18:50:19,554 - mmseg - INFO - Iter [12700/80000]	lr: 8.574e-05, eta: 1 day, 11:25:18, time: 1.751, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0378, decode.loss_dice: 1.0796, decode.acc_seg: 70.5562, aux_identity.loss_ce: 0.0373, aux_identity.acc_seg: 65.6367, loss: 1.1547
+2026-03-06 18:52:19,299 - mmseg - INFO - Iter [12750/80000]	lr: 8.568e-05, eta: 1 day, 11:25:55, time: 2.395, data_time: 0.651, memory: 5270, decode.loss_ce: 0.0358, decode.loss_dice: 1.0730, decode.acc_seg: 70.4548, aux_identity.loss_ce: 0.0362, aux_identity.acc_seg: 65.5589, loss: 1.1450
+2026-03-06 18:53:46,242 - mmseg - INFO - Iter [12800/80000]	lr: 8.562e-05, eta: 1 day, 11:23:39, time: 1.739, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0362, decode.loss_dice: 1.0951, decode.acc_seg: 70.0459, aux_identity.loss_ce: 0.0367, aux_identity.acc_seg: 64.8700, loss: 1.1680
+2026-03-06 18:55:13,979 - mmseg - INFO - Iter [12850/80000]	lr: 8.557e-05, eta: 1 day, 11:21:27, time: 1.755, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0378, decode.loss_dice: 1.0694, decode.acc_seg: 70.5110, aux_identity.loss_ce: 0.0372, aux_identity.acc_seg: 65.5672, loss: 1.1444
+2026-03-06 18:56:41,671 - mmseg - INFO - Iter [12900/80000]	lr: 8.551e-05, eta: 1 day, 11:19:15, time: 1.754, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0385, decode.loss_dice: 1.0497, decode.acc_seg: 71.3341, aux_identity.loss_ce: 0.0382, aux_identity.acc_seg: 66.2117, loss: 1.1263
+2026-03-06 18:58:09,025 - mmseg - INFO - Iter [12950/80000]	lr: 8.545e-05, eta: 1 day, 11:17:02, time: 1.747, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0373, decode.loss_dice: 1.0925, decode.acc_seg: 70.6669, aux_identity.loss_ce: 0.0372, aux_identity.acc_seg: 65.6155, loss: 1.1670
+2026-03-06 18:59:36,074 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 18:59:36,075 - mmseg - INFO - Iter [13000/80000]	lr: 8.540e-05, eta: 1 day, 11:14:48, time: 1.741, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0375, decode.loss_dice: 1.0646, decode.acc_seg: 70.6257, aux_identity.loss_ce: 0.0376, aux_identity.acc_seg: 65.5652, loss: 1.1397
+2026-03-06 19:01:04,194 - mmseg - INFO - Iter [13050/80000]	lr: 8.534e-05, eta: 1 day, 11:12:40, time: 1.762, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0380, decode.loss_dice: 1.0699, decode.acc_seg: 70.6466, aux_identity.loss_ce: 0.0377, aux_identity.acc_seg: 65.5380, loss: 1.1456
+2026-03-06 19:03:04,042 - mmseg - INFO - Iter [13100/80000]	lr: 8.528e-05, eta: 1 day, 11:13:14, time: 2.397, data_time: 0.650, memory: 5270, decode.loss_ce: 0.0374, decode.loss_dice: 1.0533, decode.acc_seg: 71.0792, aux_identity.loss_ce: 0.0377, aux_identity.acc_seg: 66.0637, loss: 1.1284
+2026-03-06 19:04:31,196 - mmseg - INFO - Iter [13150/80000]	lr: 8.523e-05, eta: 1 day, 11:11:00, time: 1.743, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0373, decode.loss_dice: 1.0568, decode.acc_seg: 71.6043, aux_identity.loss_ce: 0.0373, aux_identity.acc_seg: 66.5214, loss: 1.1313
+2026-03-06 19:05:58,362 - mmseg - INFO - Iter [13200/80000]	lr: 8.517e-05, eta: 1 day, 11:08:47, time: 1.743, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0357, decode.loss_dice: 1.0873, decode.acc_seg: 70.4424, aux_identity.loss_ce: 0.0364, aux_identity.acc_seg: 65.5197, loss: 1.1594
+2026-03-06 19:07:25,876 - mmseg - INFO - Iter [13250/80000]	lr: 8.511e-05, eta: 1 day, 11:06:36, time: 1.750, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0367, decode.loss_dice: 1.0629, decode.acc_seg: 71.6346, aux_identity.loss_ce: 0.0367, aux_identity.acc_seg: 66.6631, loss: 1.1363
+2026-03-06 19:08:53,416 - mmseg - INFO - Iter [13300/80000]	lr: 8.506e-05, eta: 1 day, 11:04:26, time: 1.751, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0359, decode.loss_dice: 1.0883, decode.acc_seg: 69.7000, aux_identity.loss_ce: 0.0362, aux_identity.acc_seg: 64.8079, loss: 1.1604
+2026-03-06 19:10:21,021 - mmseg - INFO - Iter [13350/80000]	lr: 8.500e-05, eta: 1 day, 11:02:16, time: 1.752, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0363, decode.loss_dice: 1.0858, decode.acc_seg: 70.2904, aux_identity.loss_ce: 0.0368, aux_identity.acc_seg: 65.1792, loss: 1.1589
+2026-03-06 19:11:48,249 - mmseg - INFO - Iter [13400/80000]	lr: 8.494e-05, eta: 1 day, 11:00:04, time: 1.745, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0369, decode.loss_dice: 1.0584, decode.acc_seg: 71.8722, aux_identity.loss_ce: 0.0374, aux_identity.acc_seg: 66.6238, loss: 1.1327
+2026-03-06 19:13:48,849 - mmseg - INFO - Iter [13450/80000]	lr: 8.489e-05, eta: 1 day, 11:00:38, time: 2.412, data_time: 0.654, memory: 5270, decode.loss_ce: 0.0356, decode.loss_dice: 1.0597, decode.acc_seg: 71.6541, aux_identity.loss_ce: 0.0363, aux_identity.acc_seg: 66.6098, loss: 1.1317
+2026-03-06 19:15:16,654 - mmseg - INFO - Iter [13500/80000]	lr: 8.483e-05, eta: 1 day, 10:58:30, time: 1.756, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0358, decode.loss_dice: 1.0682, decode.acc_seg: 70.9650, aux_identity.loss_ce: 0.0364, aux_identity.acc_seg: 65.9551, loss: 1.1404
+2026-03-06 19:16:44,102 - mmseg - INFO - Iter [13550/80000]	lr: 8.477e-05, eta: 1 day, 10:56:20, time: 1.749, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0353, decode.loss_dice: 1.0755, decode.acc_seg: 70.5424, aux_identity.loss_ce: 0.0359, aux_identity.acc_seg: 65.6590, loss: 1.1467
+2026-03-06 19:18:12,040 - mmseg - INFO - Iter [13600/80000]	lr: 8.472e-05, eta: 1 day, 10:54:12, time: 1.759, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0361, decode.loss_dice: 1.0956, decode.acc_seg: 69.7274, aux_identity.loss_ce: 0.0365, aux_identity.acc_seg: 64.7000, loss: 1.1681
+2026-03-06 19:19:39,742 - mmseg - INFO - Iter [13650/80000]	lr: 8.466e-05, eta: 1 day, 10:52:04, time: 1.754, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0371, decode.loss_dice: 1.0557, decode.acc_seg: 71.7365, aux_identity.loss_ce: 0.0373, aux_identity.acc_seg: 66.7127, loss: 1.1301
+2026-03-06 19:21:07,350 - mmseg - INFO - Iter [13700/80000]	lr: 8.460e-05, eta: 1 day, 10:49:56, time: 1.752, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0362, decode.loss_dice: 1.0680, decode.acc_seg: 70.4811, aux_identity.loss_ce: 0.0368, aux_identity.acc_seg: 65.3598, loss: 1.1410
+2026-03-06 19:23:05,805 - mmseg - INFO - Iter [13750/80000]	lr: 8.455e-05, eta: 1 day, 10:50:16, time: 2.369, data_time: 0.646, memory: 5270, decode.loss_ce: 0.0359, decode.loss_dice: 1.0764, decode.acc_seg: 70.5698, aux_identity.loss_ce: 0.0363, aux_identity.acc_seg: 65.5451, loss: 1.1486
+2026-03-06 19:24:33,531 - mmseg - INFO - Iter [13800/80000]	lr: 8.449e-05, eta: 1 day, 10:48:08, time: 1.754, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0345, decode.loss_dice: 1.0801, decode.acc_seg: 71.1024, aux_identity.loss_ce: 0.0355, aux_identity.acc_seg: 66.2023, loss: 1.1501
+2026-03-06 19:26:01,618 - mmseg - INFO - Iter [13850/80000]	lr: 8.443e-05, eta: 1 day, 10:46:02, time: 1.762, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0377, decode.loss_dice: 1.0568, decode.acc_seg: 71.3616, aux_identity.loss_ce: 0.0381, aux_identity.acc_seg: 66.0441, loss: 1.1326
+2026-03-06 19:27:29,593 - mmseg - INFO - Iter [13900/80000]	lr: 8.438e-05, eta: 1 day, 10:43:56, time: 1.759, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0351, decode.loss_dice: 1.0764, decode.acc_seg: 70.6715, aux_identity.loss_ce: 0.0361, aux_identity.acc_seg: 65.5843, loss: 1.1476
+2026-03-06 19:28:57,338 - mmseg - INFO - Iter [13950/80000]	lr: 8.432e-05, eta: 1 day, 10:41:49, time: 1.755, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0353, decode.loss_dice: 1.0663, decode.acc_seg: 70.9301, aux_identity.loss_ce: 0.0362, aux_identity.acc_seg: 65.8926, loss: 1.1377
+2026-03-06 19:30:25,663 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 19:30:25,665 - mmseg - INFO - Iter [14000/80000]	lr: 8.426e-05, eta: 1 day, 10:39:45, time: 1.766, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0355, decode.loss_dice: 1.0633, decode.acc_seg: 71.2134, aux_identity.loss_ce: 0.0362, aux_identity.acc_seg: 66.2565, loss: 1.1350
+2026-03-06 19:31:53,944 - mmseg - INFO - Iter [14050/80000]	lr: 8.421e-05, eta: 1 day, 10:37:41, time: 1.766, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0367, decode.loss_dice: 1.0617, decode.acc_seg: 70.7906, aux_identity.loss_ce: 0.0369, aux_identity.acc_seg: 65.6124, loss: 1.1353
+2026-03-06 19:33:54,121 - mmseg - INFO - Iter [14100/80000]	lr: 8.415e-05, eta: 1 day, 10:38:07, time: 2.403, data_time: 0.649, memory: 5270, decode.loss_ce: 0.0374, decode.loss_dice: 1.0446, decode.acc_seg: 71.6029, aux_identity.loss_ce: 0.0380, aux_identity.acc_seg: 66.3396, loss: 1.1201
+2026-03-06 19:35:22,055 - mmseg - INFO - Iter [14150/80000]	lr: 8.409e-05, eta: 1 day, 10:36:01, time: 1.759, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0349, decode.loss_dice: 1.0820, decode.acc_seg: 69.9742, aux_identity.loss_ce: 0.0354, aux_identity.acc_seg: 65.0568, loss: 1.1523
+2026-03-06 19:36:49,284 - mmseg - INFO - Iter [14200/80000]	lr: 8.404e-05, eta: 1 day, 10:33:53, time: 1.745, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0364, decode.loss_dice: 1.0531, decode.acc_seg: 71.4822, aux_identity.loss_ce: 0.0367, aux_identity.acc_seg: 66.4298, loss: 1.1262
+2026-03-06 19:38:17,128 - mmseg - INFO - Iter [14250/80000]	lr: 8.398e-05, eta: 1 day, 10:31:47, time: 1.757, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0354, decode.loss_dice: 1.0825, decode.acc_seg: 70.0338, aux_identity.loss_ce: 0.0362, aux_identity.acc_seg: 65.0398, loss: 1.1541
+2026-03-06 19:39:44,895 - mmseg - INFO - Iter [14300/80000]	lr: 8.392e-05, eta: 1 day, 10:29:41, time: 1.755, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0361, decode.loss_dice: 1.0406, decode.acc_seg: 72.1893, aux_identity.loss_ce: 0.0369, aux_identity.acc_seg: 67.0599, loss: 1.1136
+2026-03-06 19:41:12,517 - mmseg - INFO - Iter [14350/80000]	lr: 8.387e-05, eta: 1 day, 10:27:35, time: 1.752, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0370, decode.loss_dice: 1.0716, decode.acc_seg: 71.5615, aux_identity.loss_ce: 0.0375, aux_identity.acc_seg: 66.1267, loss: 1.1461
+2026-03-06 19:42:40,056 - mmseg - INFO - Iter [14400/80000]	lr: 8.381e-05, eta: 1 day, 10:25:29, time: 1.751, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0373, decode.loss_dice: 1.0474, decode.acc_seg: 71.1812, aux_identity.loss_ce: 0.0372, aux_identity.acc_seg: 66.2154, loss: 1.1219
+2026-03-06 19:44:39,257 - mmseg - INFO - Iter [14450/80000]	lr: 8.375e-05, eta: 1 day, 10:25:47, time: 2.384, data_time: 0.650, memory: 5270, decode.loss_ce: 0.0359, decode.loss_dice: 1.0675, decode.acc_seg: 71.1294, aux_identity.loss_ce: 0.0367, aux_identity.acc_seg: 65.9495, loss: 1.1401
+2026-03-06 19:46:07,767 - mmseg - INFO - Iter [14500/80000]	lr: 8.369e-05, eta: 1 day, 10:23:45, time: 1.770, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0353, decode.loss_dice: 1.0710, decode.acc_seg: 71.0250, aux_identity.loss_ce: 0.0363, aux_identity.acc_seg: 65.9212, loss: 1.1425
+2026-03-06 19:47:37,864 - mmseg - INFO - Iter [14550/80000]	lr: 8.364e-05, eta: 1 day, 10:21:51, time: 1.802, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0340, decode.loss_dice: 1.0652, decode.acc_seg: 70.7994, aux_identity.loss_ce: 0.0351, aux_identity.acc_seg: 65.8331, loss: 1.1343
+2026-03-06 19:49:05,928 - mmseg - INFO - Iter [14600/80000]	lr: 8.358e-05, eta: 1 day, 10:19:48, time: 1.761, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0365, decode.loss_dice: 1.0466, decode.acc_seg: 71.0588, aux_identity.loss_ce: 0.0368, aux_identity.acc_seg: 66.0505, loss: 1.1200
+2026-03-06 19:50:33,849 - mmseg - INFO - Iter [14650/80000]	lr: 8.352e-05, eta: 1 day, 10:17:44, time: 1.758, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0365, decode.loss_dice: 1.0534, decode.acc_seg: 71.5417, aux_identity.loss_ce: 0.0374, aux_identity.acc_seg: 66.1814, loss: 1.1273
+2026-03-06 19:52:01,467 - mmseg - INFO - Iter [14700/80000]	lr: 8.347e-05, eta: 1 day, 10:15:39, time: 1.752, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0351, decode.loss_dice: 1.0865, decode.acc_seg: 70.4482, aux_identity.loss_ce: 0.0360, aux_identity.acc_seg: 65.4357, loss: 1.1576
+2026-03-06 19:54:00,328 - mmseg - INFO - Iter [14750/80000]	lr: 8.341e-05, eta: 1 day, 10:15:52, time: 2.377, data_time: 0.645, memory: 5270, decode.loss_ce: 0.0355, decode.loss_dice: 1.0743, decode.acc_seg: 70.4700, aux_identity.loss_ce: 0.0363, aux_identity.acc_seg: 65.3700, loss: 1.1461
+2026-03-06 19:55:26,102 - mmseg - INFO - Iter [14800/80000]	lr: 8.335e-05, eta: 1 day, 10:13:39, time: 1.715, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0356, decode.loss_dice: 1.0552, decode.acc_seg: 70.7764, aux_identity.loss_ce: 0.0368, aux_identity.acc_seg: 65.4794, loss: 1.1275
+2026-03-06 19:56:52,440 - mmseg - INFO - Iter [14850/80000]	lr: 8.330e-05, eta: 1 day, 10:11:29, time: 1.727, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0352, decode.loss_dice: 1.0571, decode.acc_seg: 71.5319, aux_identity.loss_ce: 0.0362, aux_identity.acc_seg: 66.3287, loss: 1.1286
+2026-03-06 19:58:18,481 - mmseg - INFO - Iter [14900/80000]	lr: 8.324e-05, eta: 1 day, 10:09:18, time: 1.721, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0348, decode.loss_dice: 1.0708, decode.acc_seg: 70.7952, aux_identity.loss_ce: 0.0358, aux_identity.acc_seg: 65.7774, loss: 1.1414
+2026-03-06 19:59:45,604 - mmseg - INFO - Iter [14950/80000]	lr: 8.318e-05, eta: 1 day, 10:07:12, time: 1.742, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0347, decode.loss_dice: 1.0879, decode.acc_seg: 69.9882, aux_identity.loss_ce: 0.0357, aux_identity.acc_seg: 64.9174, loss: 1.1583
+2026-03-06 20:01:14,266 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 20:01:14,266 - mmseg - INFO - Iter [15000/80000]	lr: 8.313e-05, eta: 1 day, 10:05:12, time: 1.773, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0358, decode.loss_dice: 1.0525, decode.acc_seg: 71.3262, aux_identity.loss_ce: 0.0368, aux_identity.acc_seg: 66.1635, loss: 1.1250
+2026-03-06 20:02:42,426 - mmseg - INFO - Iter [15050/80000]	lr: 8.307e-05, eta: 1 day, 10:03:11, time: 1.763, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0347, decode.loss_dice: 1.0806, decode.acc_seg: 70.2257, aux_identity.loss_ce: 0.0358, aux_identity.acc_seg: 65.2596, loss: 1.1511
+2026-03-06 20:04:40,731 - mmseg - INFO - Iter [15100/80000]	lr: 8.301e-05, eta: 1 day, 10:03:19, time: 2.366, data_time: 0.645, memory: 5270, decode.loss_ce: 0.0351, decode.loss_dice: 1.0698, decode.acc_seg: 70.7714, aux_identity.loss_ce: 0.0363, aux_identity.acc_seg: 65.6244, loss: 1.1412
+2026-03-06 20:06:08,475 - mmseg - INFO - Iter [15150/80000]	lr: 8.296e-05, eta: 1 day, 10:01:16, time: 1.755, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0345, decode.loss_dice: 1.0510, decode.acc_seg: 71.1443, aux_identity.loss_ce: 0.0353, aux_identity.acc_seg: 66.2857, loss: 1.1208
+2026-03-06 20:07:36,230 - mmseg - INFO - Iter [15200/80000]	lr: 8.290e-05, eta: 1 day, 9:59:13, time: 1.755, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0343, decode.loss_dice: 1.0761, decode.acc_seg: 71.1756, aux_identity.loss_ce: 0.0356, aux_identity.acc_seg: 66.0212, loss: 1.1460
+2026-03-06 20:09:04,974 - mmseg - INFO - Iter [15250/80000]	lr: 8.284e-05, eta: 1 day, 9:57:15, time: 1.775, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0360, decode.loss_dice: 1.0311, decode.acc_seg: 72.1659, aux_identity.loss_ce: 0.0370, aux_identity.acc_seg: 66.9321, loss: 1.1041
+2026-03-06 20:10:32,595 - mmseg - INFO - Iter [15300/80000]	lr: 8.279e-05, eta: 1 day, 9:55:12, time: 1.752, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0352, decode.loss_dice: 1.0672, decode.acc_seg: 70.9385, aux_identity.loss_ce: 0.0363, aux_identity.acc_seg: 65.7928, loss: 1.1388
+2026-03-06 20:12:01,726 - mmseg - INFO - Iter [15350/80000]	lr: 8.273e-05, eta: 1 day, 9:53:15, time: 1.783, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0356, decode.loss_dice: 1.0467, decode.acc_seg: 72.3221, aux_identity.loss_ce: 0.0368, aux_identity.acc_seg: 66.9382, loss: 1.1191
+2026-03-06 20:13:29,184 - mmseg - INFO - Iter [15400/80000]	lr: 8.267e-05, eta: 1 day, 9:51:12, time: 1.749, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0356, decode.loss_dice: 1.0538, decode.acc_seg: 71.1729, aux_identity.loss_ce: 0.0362, aux_identity.acc_seg: 66.1725, loss: 1.1255
+2026-03-06 20:15:27,387 - mmseg - INFO - Iter [15450/80000]	lr: 8.261e-05, eta: 1 day, 9:51:18, time: 2.364, data_time: 0.651, memory: 5270, decode.loss_ce: 0.0338, decode.loss_dice: 1.0694, decode.acc_seg: 71.0190, aux_identity.loss_ce: 0.0353, aux_identity.acc_seg: 66.0473, loss: 1.1386
+2026-03-06 20:16:53,792 - mmseg - INFO - Iter [15500/80000]	lr: 8.256e-05, eta: 1 day, 9:49:10, time: 1.728, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0347, decode.loss_dice: 1.0675, decode.acc_seg: 71.4202, aux_identity.loss_ce: 0.0361, aux_identity.acc_seg: 66.0974, loss: 1.1384
+2026-03-06 20:18:20,649 - mmseg - INFO - Iter [15550/80000]	lr: 8.250e-05, eta: 1 day, 9:47:04, time: 1.737, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0348, decode.loss_dice: 1.0433, decode.acc_seg: 70.9588, aux_identity.loss_ce: 0.0365, aux_identity.acc_seg: 65.5664, loss: 1.1146
+2026-03-06 20:19:46,680 - mmseg - INFO - Iter [15600/80000]	lr: 8.244e-05, eta: 1 day, 9:44:56, time: 1.721, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0369, decode.loss_dice: 1.0429, decode.acc_seg: 71.0899, aux_identity.loss_ce: 0.0376, aux_identity.acc_seg: 65.8690, loss: 1.1175
+2026-03-06 20:21:13,281 - mmseg - INFO - Iter [15650/80000]	lr: 8.239e-05, eta: 1 day, 9:42:49, time: 1.732, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0349, decode.loss_dice: 1.0626, decode.acc_seg: 71.1409, aux_identity.loss_ce: 0.0360, aux_identity.acc_seg: 66.0256, loss: 1.1335
+2026-03-06 20:22:39,239 - mmseg - INFO - Iter [15700/80000]	lr: 8.233e-05, eta: 1 day, 9:40:41, time: 1.719, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0347, decode.loss_dice: 1.0476, decode.acc_seg: 71.4988, aux_identity.loss_ce: 0.0356, aux_identity.acc_seg: 66.5717, loss: 1.1180
+2026-03-06 20:24:36,950 - mmseg - INFO - Iter [15750/80000]	lr: 8.227e-05, eta: 1 day, 9:40:42, time: 2.354, data_time: 0.643, memory: 5270, decode.loss_ce: 0.0343, decode.loss_dice: 1.0602, decode.acc_seg: 71.2531, aux_identity.loss_ce: 0.0354, aux_identity.acc_seg: 66.2619, loss: 1.1299
+2026-03-06 20:26:03,093 - mmseg - INFO - Iter [15800/80000]	lr: 8.222e-05, eta: 1 day, 9:38:35, time: 1.723, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0339, decode.loss_dice: 1.0735, decode.acc_seg: 70.6199, aux_identity.loss_ce: 0.0359, aux_identity.acc_seg: 65.2617, loss: 1.1433
+2026-03-06 20:27:30,381 - mmseg - INFO - Iter [15850/80000]	lr: 8.216e-05, eta: 1 day, 9:36:32, time: 1.746, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0353, decode.loss_dice: 1.0463, decode.acc_seg: 71.4351, aux_identity.loss_ce: 0.0365, aux_identity.acc_seg: 66.2140, loss: 1.1181
+2026-03-06 20:28:57,655 - mmseg - INFO - Iter [15900/80000]	lr: 8.210e-05, eta: 1 day, 9:34:29, time: 1.745, data_time: 0.005, memory: 5270, decode.loss_ce: 0.0350, decode.loss_dice: 1.0555, decode.acc_seg: 71.3531, aux_identity.loss_ce: 0.0367, aux_identity.acc_seg: 66.0237, loss: 1.1272
+2026-03-06 20:30:24,726 - mmseg - INFO - Iter [15950/80000]	lr: 8.205e-05, eta: 1 day, 9:32:26, time: 1.741, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0343, decode.loss_dice: 1.0626, decode.acc_seg: 70.8713, aux_identity.loss_ce: 0.0357, aux_identity.acc_seg: 65.5432, loss: 1.1325
+2026-03-06 20:31:51,489 - mmseg - INFO - Saving checkpoint at 16000 iterations
+2026-03-06 20:32:04,006 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 20:32:04,011 - mmseg - INFO - Iter [16000/80000]	lr: 8.199e-05, eta: 1 day, 9:31:12, time: 1.986, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0320, decode.loss_dice: 1.0855, decode.acc_seg: 70.3030, aux_identity.loss_ce: 0.0339, aux_identity.acc_seg: 65.5030, loss: 1.1515
+2026-03-06 20:32:54,725 - mmseg - INFO - per class results:
+2026-03-06 20:32:54,731 - mmseg - INFO - 
++-------+-------+-------+
+| Class |  IoU  |  Acc  |
++-------+-------+-------+
+|  real | 88.54 | 91.95 |
+|  fake | 39.28 | 66.65 |
++-------+-------+-------+
+2026-03-06 20:32:54,732 - mmseg - INFO - Summary:
+2026-03-06 20:32:54,732 - mmseg - INFO - 
++-------+-------+------+
+|  aAcc |  mIoU | mAcc |
++-------+-------+------+
+| 89.33 | 63.91 | 79.3 |
++-------+-------+------+
+2026-03-06 20:32:54,761 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 20:32:54,761 - mmseg - INFO - Iter(val) [298]	aAcc: 0.8933, mIoU: 0.6391, mAcc: 0.7930, IoU.real: 0.8854, IoU.fake: 0.3928, Acc.real: 0.9195, Acc.fake: 0.6665
+2026-03-06 20:34:22,755 - mmseg - INFO - Iter [16050/80000]	lr: 8.193e-05, eta: 1 day, 9:32:35, time: 2.775, data_time: 1.021, memory: 5270, decode.loss_ce: 0.0335, decode.loss_dice: 1.0554, decode.acc_seg: 71.4214, aux_identity.loss_ce: 0.0352, aux_identity.acc_seg: 66.2848, loss: 1.1240
+2026-03-06 20:36:21,775 - mmseg - INFO - Iter [16100/80000]	lr: 8.187e-05, eta: 1 day, 9:32:38, time: 2.381, data_time: 0.658, memory: 5270, decode.loss_ce: 0.0333, decode.loss_dice: 1.0551, decode.acc_seg: 71.4025, aux_identity.loss_ce: 0.0354, aux_identity.acc_seg: 66.1628, loss: 1.1239
+2026-03-06 20:37:49,192 - mmseg - INFO - Iter [16150/80000]	lr: 8.182e-05, eta: 1 day, 9:30:35, time: 1.748, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0343, decode.loss_dice: 1.0494, decode.acc_seg: 71.8196, aux_identity.loss_ce: 0.0362, aux_identity.acc_seg: 66.4973, loss: 1.1199
+2026-03-06 20:39:16,738 - mmseg - INFO - Iter [16200/80000]	lr: 8.176e-05, eta: 1 day, 9:28:34, time: 1.751, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0335, decode.loss_dice: 1.0644, decode.acc_seg: 71.0449, aux_identity.loss_ce: 0.0353, aux_identity.acc_seg: 65.9264, loss: 1.1332
+2026-03-06 20:40:44,122 - mmseg - INFO - Iter [16250/80000]	lr: 8.170e-05, eta: 1 day, 9:26:32, time: 1.748, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0343, decode.loss_dice: 1.0470, decode.acc_seg: 72.0393, aux_identity.loss_ce: 0.0362, aux_identity.acc_seg: 66.6507, loss: 1.1175
+2026-03-06 20:42:11,266 - mmseg - INFO - Iter [16300/80000]	lr: 8.165e-05, eta: 1 day, 9:24:29, time: 1.743, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0338, decode.loss_dice: 1.0563, decode.acc_seg: 71.2155, aux_identity.loss_ce: 0.0354, aux_identity.acc_seg: 66.1060, loss: 1.1255
+2026-03-06 20:43:38,400 - mmseg - INFO - Iter [16350/80000]	lr: 8.159e-05, eta: 1 day, 9:22:26, time: 1.743, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0340, decode.loss_dice: 1.0609, decode.acc_seg: 71.3690, aux_identity.loss_ce: 0.0356, aux_identity.acc_seg: 66.1801, loss: 1.1305
+2026-03-06 20:45:05,747 - mmseg - INFO - Iter [16400/80000]	lr: 8.153e-05, eta: 1 day, 9:20:24, time: 1.747, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0334, decode.loss_dice: 1.0773, decode.acc_seg: 70.1266, aux_identity.loss_ce: 0.0350, aux_identity.acc_seg: 65.0647, loss: 1.1457
+2026-03-06 20:47:03,937 - mmseg - INFO - Iter [16450/80000]	lr: 8.148e-05, eta: 1 day, 9:20:22, time: 2.364, data_time: 0.652, memory: 5270, decode.loss_ce: 0.0325, decode.loss_dice: 1.0631, decode.acc_seg: 70.9140, aux_identity.loss_ce: 0.0346, aux_identity.acc_seg: 65.9071, loss: 1.1302
+2026-03-06 20:48:31,074 - mmseg - INFO - Iter [16500/80000]	lr: 8.142e-05, eta: 1 day, 9:18:19, time: 1.743, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0332, decode.loss_dice: 1.0553, decode.acc_seg: 71.2953, aux_identity.loss_ce: 0.0352, aux_identity.acc_seg: 66.1397, loss: 1.1237
+2026-03-06 20:49:58,585 - mmseg - INFO - Iter [16550/80000]	lr: 8.136e-05, eta: 1 day, 9:16:19, time: 1.750, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0332, decode.loss_dice: 1.0431, decode.acc_seg: 72.1856, aux_identity.loss_ce: 0.0355, aux_identity.acc_seg: 66.7881, loss: 1.1118
+2026-03-06 20:51:25,652 - mmseg - INFO - Iter [16600/80000]	lr: 8.130e-05, eta: 1 day, 9:14:16, time: 1.741, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0337, decode.loss_dice: 1.0690, decode.acc_seg: 70.9985, aux_identity.loss_ce: 0.0354, aux_identity.acc_seg: 66.0390, loss: 1.1380
+2026-03-06 20:52:54,366 - mmseg - INFO - Iter [16650/80000]	lr: 8.125e-05, eta: 1 day, 9:12:20, time: 1.774, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0329, decode.loss_dice: 1.0772, decode.acc_seg: 70.7320, aux_identity.loss_ce: 0.0349, aux_identity.acc_seg: 65.6455, loss: 1.1450
+2026-03-06 20:54:22,229 - mmseg - INFO - Iter [16700/80000]	lr: 8.119e-05, eta: 1 day, 9:10:21, time: 1.757, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0336, decode.loss_dice: 1.0423, decode.acc_seg: 72.4791, aux_identity.loss_ce: 0.0358, aux_identity.acc_seg: 67.2288, loss: 1.1116
+2026-03-06 20:55:49,246 - mmseg - INFO - Iter [16750/80000]	lr: 8.113e-05, eta: 1 day, 9:08:20, time: 1.740, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0340, decode.loss_dice: 1.0395, decode.acc_seg: 71.6712, aux_identity.loss_ce: 0.0358, aux_identity.acc_seg: 66.4026, loss: 1.1092
+2026-03-06 20:57:47,629 - mmseg - INFO - Iter [16800/80000]	lr: 8.108e-05, eta: 1 day, 9:08:16, time: 2.368, data_time: 0.666, memory: 5270, decode.loss_ce: 0.0325, decode.loss_dice: 1.0915, decode.acc_seg: 69.9013, aux_identity.loss_ce: 0.0347, aux_identity.acc_seg: 64.8002, loss: 1.1587
+2026-03-06 20:59:24,088 - mmseg - INFO - Iter [16850/80000]	lr: 8.102e-05, eta: 1 day, 9:06:49, time: 1.929, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0344, decode.loss_dice: 1.0320, decode.acc_seg: 72.4340, aux_identity.loss_ce: 0.0363, aux_identity.acc_seg: 67.0983, loss: 1.1027
+2026-03-06 21:00:48,850 - mmseg - INFO - Iter [16900/80000]	lr: 8.096e-05, eta: 1 day, 9:04:39, time: 1.695, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0327, decode.loss_dice: 1.0338, decode.acc_seg: 71.8136, aux_identity.loss_ce: 0.0351, aux_identity.acc_seg: 66.6179, loss: 1.1016
+2026-03-06 21:02:17,628 - mmseg - INFO - Iter [16950/80000]	lr: 8.091e-05, eta: 1 day, 9:02:44, time: 1.776, data_time: 0.006, memory: 5270, decode.loss_ce: 0.0329, decode.loss_dice: 1.0727, decode.acc_seg: 70.7726, aux_identity.loss_ce: 0.0350, aux_identity.acc_seg: 65.5940, loss: 1.1406
+2026-03-06 21:04:00,557 - mmseg - INFO - Exp name: denseclip_deepfake_r50.py
+2026-03-06 21:04:00,558 - mmseg - INFO - Iter [17000/80000]	lr: 8.085e-05, eta: 1 day, 9:01:41, time: 2.059, data_time: 0.007, memory: 5270, decode.loss_ce: 0.0344, decode.loss_dice: 1.0268, decode.acc_seg: 72.6440, aux_identity.loss_ce: 0.0363, aux_identity.acc_seg: 67.2392, loss: 1.0975
