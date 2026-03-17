@@ -1,5 +1,9 @@
 log_config = dict(
-    interval=50, hooks=[dict(type='TextLoggerHook', by_epoch=False)])
+    interval=50,
+    hooks=[
+        dict(type='TextLoggerHook', by_epoch=False),
+        dict(type='TensorboardLoggerHook')
+    ])
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 load_from = None
@@ -22,22 +26,24 @@ checkpoint_config = dict(by_epoch=False, interval=4000)
 evaluation = dict(interval=4000, metric='mIoU', save_best='mIoU')
 custom_imports = dict(
     imports=['mmseg_custom.datasets.deepfake'], allow_failed_imports=False)
-data_root = 'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset'
+data_root = 'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes'
 dataset_type = 'DeepfakeDataset'
 img_norm_cfg = dict(
-    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+    mean=[122.7709383, 116.7460125, 104.09373615000001],
+    std=[68.5005327, 66.6321579, 70.32316304999999],
+    to_rgb=True)
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', reduce_zero_label=False),
-    dict(type='ForceBinaryLabels', threshold=127),
-    dict(type='Resize', img_scale=(299, 299), ratio_range=(0.75, 1.25)),
-    dict(type='RandomCrop', crop_size=(299, 299), cat_max_ratio=0.75),
+    dict(type='ForceBinaryLabels', threshold=10),
+    dict(type='Resize', img_scale=(299, 299), ratio_range=(0.8, 1.2)),
+    dict(type='RandomCrop', crop_size=(299, 299), cat_max_ratio=0.98),
     dict(type='RandomFlip', prob=0.5),
     dict(type='PhotoMetricDistortion'),
     dict(
         type='Normalize',
-        mean=[123.675, 116.28, 103.53],
-        std=[58.395, 57.12, 57.375],
+        mean=[122.7709383, 116.7460125, 104.09373615000001],
+        std=[68.5005327, 66.6321579, 70.32316304999999],
         to_rgb=True),
     dict(type='Pad', size=(320, 320), pad_val=0, seg_pad_val=255),
     dict(type='DefaultFormatBundle'),
@@ -59,8 +65,8 @@ test_pipeline = [
             dict(type='Resize', keep_ratio=True),
             dict(
                 type='Normalize',
-                mean=[123.675, 116.28, 103.53],
-                std=[58.395, 57.12, 57.375],
+                mean=[122.7709383, 116.7460125, 104.09373615000001],
+                std=[68.5005327, 66.6321579, 70.32316304999999],
                 to_rgb=True),
             dict(type='Pad', size=(320, 320), pad_val=0, seg_pad_val=255),
             dict(type='ImageToTensor', keys=['img']),
@@ -79,24 +85,23 @@ data = dict(
     train=dict(
         type='DeepfakeDataset',
         data_root=
-        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset',
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes',
         img_dir='images/training',
         ann_dir='annotations/training',
         text_json_path=
-        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset/text_infos/train_text.json',
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes/text_infos/train_text.json',
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(type='LoadAnnotations', reduce_zero_label=False),
-            dict(type='ForceBinaryLabels', threshold=127),
-            dict(
-                type='Resize', img_scale=(299, 299), ratio_range=(0.75, 1.25)),
-            dict(type='RandomCrop', crop_size=(299, 299), cat_max_ratio=0.75),
+            dict(type='ForceBinaryLabels', threshold=10),
+            dict(type='Resize', img_scale=(299, 299), ratio_range=(0.8, 1.2)),
+            dict(type='RandomCrop', crop_size=(299, 299), cat_max_ratio=0.98),
             dict(type='RandomFlip', prob=0.5),
             dict(type='PhotoMetricDistortion'),
             dict(
                 type='Normalize',
-                mean=[123.675, 116.28, 103.53],
-                std=[58.395, 57.12, 57.375],
+                mean=[122.7709383, 116.7460125, 104.09373615000001],
+                std=[68.5005327, 66.6321579, 70.32316304999999],
                 to_rgb=True),
             dict(type='Pad', size=(320, 320), pad_val=0, seg_pad_val=255),
             dict(type='DefaultFormatBundle'),
@@ -111,11 +116,11 @@ data = dict(
     val=dict(
         type='DeepfakeDataset',
         data_root=
-        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset',
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes',
         img_dir='images/validation',
         ann_dir='annotations/validation',
         text_json_path=
-        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset/text_infos/val_text.json',
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes/text_infos/val_text.json',
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(
@@ -126,8 +131,8 @@ data = dict(
                     dict(type='Resize', keep_ratio=True),
                     dict(
                         type='Normalize',
-                        mean=[123.675, 116.28, 103.53],
-                        std=[58.395, 57.12, 57.375],
+                        mean=[122.7709383, 116.7460125, 104.09373615000001],
+                        std=[68.5005327, 66.6321579, 70.32316304999999],
                         to_rgb=True),
                     dict(
                         type='Pad',
@@ -148,11 +153,11 @@ data = dict(
     test=dict(
         type='DeepfakeDataset',
         data_root=
-        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset',
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes',
         img_dir='images/validation',
         ann_dir='annotations/validation',
         text_json_path=
-        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset/text_infos/val_text.json',
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes/text_infos/val_text.json',
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(
@@ -163,8 +168,8 @@ data = dict(
                     dict(type='Resize', keep_ratio=True),
                     dict(
                         type='Normalize',
-                        mean=[123.675, 116.28, 103.53],
-                        std=[58.395, 57.12, 57.375],
+                        mean=[122.7709383, 116.7460125, 104.09373615000001],
+                        std=[68.5005327, 66.6321579, 70.32316304999999],
                         to_rgb=True),
                     dict(
                         type='Pad',
@@ -221,14 +226,13 @@ model = dict(
         norm_cfg=dict(type='BN', requires_grad=True),
         align_corners=False,
         ignore_index=255,
-        sampler=dict(type='OHEMPixelSampler', thresh=0.7, min_kept=100000),
         loss_decode=[
             dict(
                 type='CrossEntropyLoss',
                 use_sigmoid=False,
                 loss_weight=1.0,
-                class_weight=[0.1, 1.0]),
-            dict(type='DiceLoss', loss_weight=3.0)
+                class_weight=[0.1, 0.9]),
+            dict(type='DiceLoss', loss_weight=0.5)
         ]),
     identity_head=dict(
         type='IdentityHead',
@@ -237,12 +241,11 @@ model = dict(
         num_classes=2,
         norm_cfg=dict(type='BN', requires_grad=True),
         ignore_index=255,
-        sampler=dict(type='OHEMPixelSampler', thresh=0.7, min_kept=100000),
         loss_decode=dict(
             type='CrossEntropyLoss',
             use_sigmoid=False,
             loss_weight=1.0,
-            class_weight=[0.1, 1.0])),
+            class_weight=[0.1, 0.9])),
     test_cfg=dict(mode='whole'))
 work_dir = './work_dirs\denseclip_deepfake_r50'
 gpu_ids = range(0, 1)

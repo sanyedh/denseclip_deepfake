@@ -3,7 +3,7 @@ log_config = dict(
     interval=50,
     hooks=[
         dict(type='TextLoggerHook', by_epoch=False),
-        # dict(type='TensorboardLoggerHook')
+        dict(type='TensorboardLoggerHook')  # tensorboard --logdir work_dirs
     ])
 # yapf:enable
 dist_params = dict(backend='nccl')

@@ -1,39 +1,39 @@
 # 1. 引用基础配置
 _base_ = [
-    # '_base_/models/denseclip_r50.py',
     '_base_/default_runtime.py',
     '_base_/schedules/schedule_80k.py'
 ]
 
-# 2. 注册自定义 Dataset 模块 (确保 deepfake.py 能够被导入)
+# 2. 注册自定义 Dataset 模块
 custom_imports = dict(imports=['mmseg_custom.datasets.deepfake'], allow_failed_imports=False)
 
 # 3. 定义数据路径
-data_root = r'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset'
+data_root = r'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes'
 dataset_type = 'DeepfakeDataset'
 
 # 4. 数据预处理
 img_norm_cfg = dict(
-    mean=[123.675, 116.28, 103.53],
-    std=[58.395, 57.12, 57.375],
+    mean=[0.48145466 * 255, 0.4578275 * 255, 0.40821073 * 255],
+    std=[0.26862954 * 255, 0.26130258 * 255, 0.27577711 * 255],
     to_rgb=True
 )
 
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', reduce_zero_label=False),
-    dict(type='ForceBinaryLabels', threshold=127),
 
-    # 加入随机裁剪和缩放
-    dict(type='Resize', img_scale=(299, 299), ratio_range=(0.75, 1.25)),
-    dict(type='RandomCrop', crop_size=(299, 299), cat_max_ratio=0.75),
+    # 【修改1】由于是纯净的 PNG，将二值化阈值调低到 10，精准分离背景与伪造区域
+    dict(type='ForceBinaryLabels', threshold=10),
+
+    # 【修改2】保持原图分辨率 299x299，稍微收紧缩放比例以保护高频伪造痕迹
+    dict(type='Resize', img_scale=(299, 299), ratio_range=(0.8, 1.2)),
+    dict(type='RandomCrop', crop_size=(299, 299), cat_max_ratio=0.98),
 
     dict(type='RandomFlip', prob=0.5),
-
-    # 加入光度失真(极度重要！可模拟颜色不匹配和部分噪声)
     dict(type='PhotoMetricDistortion'),
-
     dict(type='Normalize', **img_norm_cfg),
+
+    # 【保持不变】用纯黑边界 (pad_val=0) 和 忽略标签 (seg_pad_val=255) 凑齐网络需要的 320x320
     dict(type='Pad', size=(320, 320), pad_val=0, seg_pad_val=255),
     dict(type='DefaultFormatBundle'),
     dict(type='Collect',
@@ -46,12 +46,14 @@ test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=(299, 299), # 注意这里改为 299
+        # 【修改3】同步测试时的分辨率为原生 299x299
+        img_scale=(299, 299),
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
             dict(type='Normalize', **img_norm_cfg),
-            # 测试时同样 Pad 到 320
+
+            # 【保持不变】测试时同样需要垫齐到 320x320 避免特征层维度报错
             dict(type='Pad', size=(320, 320), pad_val=0, seg_pad_val=255),
             dict(type='ImageToTensor', keys=['img']),
             dict(type='Collect',
@@ -99,6 +101,7 @@ model = dict(
         type='CLIPResNetWithAttention',
         layers=[3, 4, 6, 3],
         style='pytorch',
+        # 【保持不变】Backbone 需要接受 32 的整数倍，这里与 Pad 的尺寸保持一致
         input_resolution=320),
 
     text_encoder=dict(
@@ -120,6 +123,7 @@ model = dict(
         in_channels=[256, 512, 1024, 2050],
         out_channels=256,
         num_outs=4),
+
     decode_head=dict(
         type='TextGuidedFPNHead',
         in_channels=[256, 256, 256, 256],
@@ -132,17 +136,12 @@ model = dict(
         align_corners=False,
         ignore_index=255,
 
-        # --- 新增: OHEM 难例挖掘采样器 ---
-        # 仅对预测概率低于 0.7 的困难像素计算 Loss，每次至少保留 100000 个像素点
-        sampler=dict(type='OHEMPixelSampler', thresh=0.7, min_kept=100000),
-
         loss_decode=[
-            # 配合 OHEM，将 real(0) 类的权重进一步压低至 0.1，让网络更关注 fake(1)
-            dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0, class_weight=[0.1, 1.0]),
-            # 提升 Dice Loss 权重至 3.0，强制网络关注整体区域的重叠度
-            dict(type='DiceLoss', loss_weight=3.0)
+            dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0, class_weight=[0.1, 0.9]),
+            dict(type='DiceLoss', loss_weight=0.5)
         ]
     ),
+
     identity_head=dict(
         type='IdentityHead',
         in_channels=2,
@@ -151,14 +150,8 @@ model = dict(
         norm_cfg=dict(type='BN', requires_grad=True),
         ignore_index=255,
 
-        # --- 新增: 辅助头同样引入 OHEM ---
-        sampler=dict(type='OHEMPixelSampler', thresh=0.7, min_kept=100000),
-
         loss_decode=dict(
-            type='CrossEntropyLoss',
-            use_sigmoid=False,
-            loss_weight=1.0,
-            class_weight=[0.1, 1.0] # 辅助头权重同步调整
+            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0, class_weight=[0.1, 0.9]
         )
     ),
     test_cfg=dict(mode='whole')
