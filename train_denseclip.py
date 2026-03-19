@@ -4,7 +4,12 @@ import os
 import os.path as osp
 import time
 import warnings
-
+warnings.filterwarnings(
+    'ignore',
+    message='On January 1, 2023, MMCV will release v2.0.0, in which it will remove components related to the training process',
+    category=UserWarning,
+    module='mmcv'
+)
 import mmcv
 import torch
 from mmcv.runner import init_dist

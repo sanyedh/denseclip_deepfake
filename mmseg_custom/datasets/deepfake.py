@@ -86,3 +86,11 @@ class DeepfakeDataset(CustomDataset):
         new_seg[gt_seg > 127] = 1
 
         return new_seg
+
+    def get_gt_seg_maps(self, efficient_test=None, **kwargs):
+        """
+        重写底层方法：强制 evaluate 评估阶段不直接读硬盘，
+        而是调用我们的 get_gt_seg_map_by_idx 方法获取 (0, 1) 二值化后的标签。
+        """
+        for idx in range(len(self)):
+            yield self.get_gt_seg_map_by_idx(idx)

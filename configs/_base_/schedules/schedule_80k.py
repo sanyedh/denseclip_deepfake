@@ -8,5 +8,5 @@ lr_config = dict(policy='poly', power=0.9, min_lr=1e-6, by_epoch=False,
                  warmup_ratio=1e-6)
 # runtime settings
 runner = dict(type='IterBasedRunner', max_iters=80000)
-checkpoint_config = dict(by_epoch=False, interval=4000)
+checkpoint_config = dict(by_epoch=False, interval=8000)
 evaluation = dict(interval=4000, metric='mIoU',save_best='mIoU')

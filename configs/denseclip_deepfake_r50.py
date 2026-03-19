@@ -8,7 +8,7 @@ _base_ = [
 custom_imports = dict(imports=['mmseg_custom.datasets.deepfake'], allow_failed_imports=False)
 
 # 3. 定义数据路径
-data_root = r'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset'
+data_root = r'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes'
 dataset_type = 'DeepfakeDataset'
 
 # 4. 数据预处理
@@ -137,7 +137,7 @@ model = dict(
         ignore_index=255,
 
         loss_decode=[
-            dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0, class_weight=[0.1, 0.9]),
+            dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0, class_weight=[0.5, 0.5]),
             dict(type='DiceLoss', loss_weight=0.5)
         ]
     ),

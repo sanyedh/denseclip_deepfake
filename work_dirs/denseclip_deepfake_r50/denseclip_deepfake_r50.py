@@ -22,11 +22,11 @@ lr_config = dict(
     warmup_iters=1500,
     warmup_ratio=1e-06)
 runner = dict(type='IterBasedRunner', max_iters=80000)
-checkpoint_config = dict(by_epoch=False, interval=4000)
+checkpoint_config = dict(by_epoch=False, interval=8000)
 evaluation = dict(interval=4000, metric='mIoU', save_best='mIoU')
 custom_imports = dict(
     imports=['mmseg_custom.datasets.deepfake'], allow_failed_imports=False)
-data_root = 'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset'
+data_root = 'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes'
 dataset_type = 'DeepfakeDataset'
 img_norm_cfg = dict(
     mean=[122.7709383, 116.7460125, 104.09373615000001],
@@ -85,11 +85,11 @@ data = dict(
     train=dict(
         type='DeepfakeDataset',
         data_root=
-        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset',
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes',
         img_dir='images/training',
         ann_dir='annotations/training',
         text_json_path=
-        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset/text_infos/train_text.json',
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes/text_infos/train_text.json',
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(type='LoadAnnotations', reduce_zero_label=False),
@@ -116,11 +116,11 @@ data = dict(
     val=dict(
         type='DeepfakeDataset',
         data_root=
-        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset',
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes',
         img_dir='images/validation',
         ann_dir='annotations/validation',
         text_json_path=
-        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset/text_infos/val_text.json',
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes/text_infos/val_text.json',
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(
@@ -153,11 +153,11 @@ data = dict(
     test=dict(
         type='DeepfakeDataset',
         data_root=
-        r'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset',
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes',
         img_dir='images/validation',
         ann_dir='annotations/validation',
         text_json_path=
-        r'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset/text_infos/val_text.json',
+        'F:\python_program\deepfake\DenseCLIP-master\data\ade\DeepfakeDataset\Deepfakes/text_infos/val_text.json',
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(
@@ -231,7 +231,7 @@ model = dict(
                 type='CrossEntropyLoss',
                 use_sigmoid=False,
                 loss_weight=1.0,
-                class_weight=[0.1, 0.9]),
+                class_weight=[0.5, 0.5]),
             dict(type='DiceLoss', loss_weight=0.5)
         ]),
     identity_head=dict(
